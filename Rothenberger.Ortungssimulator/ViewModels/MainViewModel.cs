@@ -22,6 +22,22 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         Shepard
     }
 
+    public class MeasurementResult
+    {
+        public TimeSpan Time { get; set; }
+        public double Distance { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string ToneType { get; set; }
+        public float SinusFrequency { get; set; }
+        public float SinusAmplitude { get; set; }
+        public float ShepardBaseFrequency { get; set; }
+        public float ShepardFrequencyRange { get; set; }
+        public int ShepardNumTones { get; set; }
+        public float ShepardAmplitude { get; set; }
+        public float ShepardEnvelopeWidth { get; set; }
+        public string ShepardSweepMode { get; set; }
+    }
+
     public class MainViewModel : INotifyPropertyChanged
     {
         private const int CanvasSizePx = 1000;
@@ -150,6 +166,8 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                 }
             }
         }
+
+        public ObservableCollection<MeasurementResult> Results { get; } = new ObservableCollection<MeasurementResult>();
 
         public MainViewModel()
         {
@@ -390,7 +408,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
 
                 if (_clickCount == 0)
                 {
-                    // Start timer
                     Elapsed = TimeSpan.Zero;
                     TimerRunning = true;
                     _timer.Start();
@@ -399,7 +416,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                 }
                 else if (_clickCount == 1)
                 {
-                    // Show probe and clicked position, stop timer
                     ClickedX = x;
                     ClickedY = y;
                     ProbeVisible = true;
@@ -409,16 +425,31 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     _clickCount = 2;
                     OnPropertyChanged(nameof(DistanceToProbeMeter));
 
-                    // Ton stoppen
                     _soundProvider.Amplitude = 0f;
                     _waveOut.Stop();
                     _soundActive = false;
 
                     ShowDistanceAfterTimer = true;
+
+                    // Ergebnis speichern
+                    Results.Add(new MeasurementResult
+                    {
+                        Time = Elapsed,
+                        Distance = DistanceToProbeMeter,
+                        Timestamp = DateTime.Now,
+                        ToneType = SelectedToneType.ToString(),
+                        SinusFrequency = SinusFrequency,
+                        SinusAmplitude = SinusAmplitude,
+                        ShepardBaseFrequency = ShepardBaseFrequency,
+                        ShepardFrequencyRange = ShepardFrequencyRange,
+                        ShepardNumTones = ShepardNumTones,
+                        ShepardAmplitude = ShepardAmplitude,
+                        ShepardEnvelopeWidth = ShepardEnvelopeWidth,
+                        ShepardSweepMode = ShepardSweepMode.ToString()
+                    });
                 }
                 else
                 {
-                    // Reset
                     ResetSimulator();
                 }
             }

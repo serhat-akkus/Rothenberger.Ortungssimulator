@@ -106,6 +106,29 @@
                     <TextBlock Text="{Binding ShepardSweepMode}" Margin="20,0,0,0" VerticalAlignment="Center"/>
                 </StackPanel>
             </StackPanel>
+
+            <!-- Ergebnisliste unterhalb der Parameter -->
+            <TextBlock FontSize="20" FontWeight="Bold" Text="Messungen" Margin="0,30,0,10"/>
+            <ListBox ItemsSource="{Binding Results}" Height="300">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <StackPanel Orientation="Vertical" Margin="0,0,0,10">
+                            <TextBlock Text="{Binding Timestamp, StringFormat='Datum: {0:dd.MM.yyyy} Uhrzeit: {0:HH:mm:ss}'}" FontWeight="Bold"/>
+                            <TextBlock Text="{Binding Time, StringFormat='Zeit: {0:mm\\:ss\\.ff}'}"/>
+                            <TextBlock Text="{Binding Distance, StringFormat='Distanz: {0:F2} m'}"/>
+                            <TextBlock Text="{Binding ToneType, StringFormat='Tontyp: {0}'}"/>
+                            <TextBlock Text="{Binding SinusFrequency, StringFormat='Sinus-Frequenz: {0} Hz'}"/>
+                            <TextBlock Text="{Binding SinusAmplitude, StringFormat='Sinus-Amplitude: {0:F2}'}"/>
+                            <TextBlock Text="{Binding ShepardBaseFrequency, StringFormat='Shepard-Basisfrequenz: {0} Hz'}"/>
+                            <TextBlock Text="{Binding ShepardFrequencyRange, StringFormat='Shepard-Frequenzbereich: {0} Hz'}"/>
+                            <TextBlock Text="{Binding ShepardNumTones, StringFormat='Shepard-Anzahl Töne: {0}'}"/>
+                            <TextBlock Text="{Binding ShepardAmplitude, StringFormat='Shepard-Amplitude: {0:F2}'}"/>
+                            <TextBlock Text="{Binding ShepardEnvelopeWidth, StringFormat='Shepard-Envelope Width: {0:F2}'}"/>
+                            <TextBlock Text="{Binding ShepardSweepMode, StringFormat='Shepard-Sweep-Modus: {0}'}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
         </StackPanel>
     </Grid>
 </Window>
