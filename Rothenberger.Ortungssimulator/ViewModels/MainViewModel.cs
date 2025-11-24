@@ -8,6 +8,13 @@ using NAudio.Wave;
 
 namespace Rothenberger.Ortungssimulator.ViewModels
 {
+    public enum SweepMode
+    {
+        Linear,
+        Logarithmic,
+        Cyclic
+    }
+
     public enum ToneType
     {
         SinusLinear,
@@ -41,11 +48,92 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         private ISoundProvider _soundProvider;
         private bool _soundActive;
 
+        // Sinus-Parameter
+        private float _sinusFrequency = 440f;
+        public float SinusFrequency
+        {
+            get => _sinusFrequency;
+            set
+            {
+                if (_sinusFrequency != value)
+                {
+                    _sinusFrequency = value;
+                    OnPropertyChanged();
+                    UpdateSoundProviderParameters();
+                }
+            }
+        }
+
+        private float _sinusAmplitude = 1f;
+        public float SinusAmplitude
+        {
+            get => _sinusAmplitude;
+            set
+            {
+                if (_sinusAmplitude != value)
+                {
+                    _sinusAmplitude = value;
+                    OnPropertyChanged();
+                    UpdateSoundProviderParameters();
+                }
+            }
+        }
+
+        // Shepard-Parameter (extended)
+        private float _shepardBaseFrequency = 440f;
+        public float ShepardBaseFrequency
+        {
+            get => _shepardBaseFrequency;
+            set { if (_shepardBaseFrequency != value) { _shepardBaseFrequency = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
+        private int _shepardNumTones = 6;
+        public int ShepardNumTones
+        {
+            get => _shepardNumTones;
+            set { if (_shepardNumTones != value) { _shepardNumTones = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
+        private float _shepardAmplitude = 1f;
+        public float ShepardAmplitude
+        {
+            get => _shepardAmplitude;
+            set { if (_shepardAmplitude != value) { _shepardAmplitude = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
+        private float _shepardFrequencyRange = 440f; // Default: one octave
+        public float ShepardFrequencyRange
+        {
+            get => _shepardFrequencyRange;
+            set { if (_shepardFrequencyRange != value) { _shepardFrequencyRange = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
+        private float _shepardEnvelopeWidth = 2.0f; // Default: 2.0
+        public float ShepardEnvelopeWidth
+        {
+            get => _shepardEnvelopeWidth;
+            set { if (_shepardEnvelopeWidth != value) { _shepardEnvelopeWidth = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
+        private SweepMode _shepardSweepMode = SweepMode.Linear;
+        public SweepMode ShepardSweepMode
+        {
+            get => _shepardSweepMode;
+            set { if (_shepardSweepMode != value) { _shepardSweepMode = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
+        }
+
         public ObservableCollection<ToneType> ToneTypes { get; } = new ObservableCollection<ToneType>
         {
             ToneType.Shepard,
             ToneType.SinusLinear,
             ToneType.SinusLogarithmic
+        };
+
+        public ObservableCollection<SweepMode> SweepModes { get; } = new ObservableCollection<SweepMode>
+        {
+            SweepMode.Linear,
+            SweepMode.Logarithmic,
+            SweepMode.Cyclic
         };
 
         private ToneType _selectedToneType = ToneType.SinusLinear;
@@ -85,20 +173,49 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             switch (SelectedToneType)
             {
                 case ToneType.SinusLinear:
-                    _soundProvider = new SineWaveProvider32();
-                    break;
                 case ToneType.SinusLogarithmic:
-                    _soundProvider = new LogSineWaveProvider32();
+                    _soundProvider = new SineWaveProvider32();
+                    _soundProvider.SetWaveFormat(44100, 1);
+                    _soundProvider.Frequency = SinusFrequency;
+                    _soundProvider.Amplitude = SinusAmplitude;
                     break;
                 case ToneType.Shepard:
-                    _soundProvider = new ShepardToneProvider32();
+                    _soundProvider = new ShepardToneProvider32
+                    {
+                        NumTones = ShepardNumTones,
+                        EnvelopeWidth = ShepardEnvelopeWidth
+                    };
+                    _soundProvider.SetWaveFormat(44100, 1);
+                    _soundProvider.Frequency = ShepardBaseFrequency;
+                    _soundProvider.Amplitude = ShepardAmplitude;
                     break;
             }
-            _soundProvider.SetWaveFormat(44100, 1);
-            _soundProvider.Frequency = 440f;
-            _soundProvider.Amplitude = 0f;
             _waveOut = new WaveOutEvent();
             _waveOut.Init(_soundProvider);
+        }
+
+        private void UpdateSoundProviderParameters()
+        {
+            if (_soundProvider == null) return;
+            switch (SelectedToneType)
+            {
+                case ToneType.SinusLinear:
+                case ToneType.SinusLogarithmic:
+                    _soundProvider.Frequency = SinusFrequency;
+                    // Amplitude NICHT setzen!
+                    break;
+                case ToneType.Shepard:
+                    if (_soundProvider is ShepardToneProvider32 shepard)
+                    {
+                        shepard.Frequency = ShepardBaseFrequency;
+                        // Amplitude NICHT setzen!
+                        shepard.NumTones = ShepardNumTones;
+                        shepard.EnvelopeWidth = ShepardEnvelopeWidth;
+                    }
+                    break;
+            }
+            // Ton ggf. aktualisieren:
+            UpdateSoundIfActive();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -165,6 +282,13 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             set { _clickedY = value; OnPropertyChanged(); }
         }
 
+        private bool _showDistanceAfterTimer;
+        public bool ShowDistanceAfterTimer
+        {
+            get => _showDistanceAfterTimer;
+            set { _showDistanceAfterTimer = value; OnPropertyChanged(); }
+        }
+
         public double DistanceToProbeMeter
         {
             get
@@ -181,7 +305,12 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             MouseX = x;
             MouseY = y;
 
-            if (_clickCount == 1) // Nur nach erstem Klick
+            UpdateSoundIfActive();
+        }
+
+        private void UpdateSoundIfActive()
+        {
+            if (_clickCount == 1)
             {
                 double dx = (MouseX - ProbeX) * MeterPerPixel;
                 double dy = (MouseY - ProbeY) * MeterPerPixel;
@@ -193,14 +322,14 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     switch (SelectedToneType)
                     {
                         case ToneType.SinusLinear:
-                            amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                            amplitude = SinusAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
                             break;
                         case ToneType.SinusLogarithmic:
-                            amplitude = (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter)); // log. Anstieg
+                            amplitude = SinusAmplitude * (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter));
                             amplitude = Math.Max(0f, amplitude);
                             break;
                         case ToneType.Shepard:
-                            amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                            amplitude = ShepardAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
                             break;
                         default:
                             amplitude = 0f;
@@ -226,14 +355,29 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             switch (SelectedToneType)
             {
                 case ToneType.Shepard:
-                    // Shepard-Ton: Frequenz zyklisch im Bereich 220-880 Hz
+                    // Shepard-Ton: Frequenz zyklisch im Bereich einer Oktave
                     double norm = 1.0 - (dist / ProbeRadiusMeter);
-                    double shepardFreq = 220 + 660 * norm;
+                    double shepardFreq;
+                    switch (ShepardSweepMode)
+                    {
+                        case SweepMode.Linear:
+                            shepardFreq = ShepardBaseFrequency + (ShepardFrequencyRange * norm);
+                            break;
+                        case SweepMode.Logarithmic:
+                            shepardFreq = ShepardBaseFrequency * Math.Pow(2, norm * Math.Log(ShepardFrequencyRange / ShepardBaseFrequency, 2));
+                            break;
+                        case SweepMode.Cyclic:
+                            shepardFreq = ShepardBaseFrequency * Math.Pow(2, (norm % 1.0));
+                            break;
+                        default:
+                            shepardFreq = ShepardBaseFrequency + (ShepardFrequencyRange * norm);
+                            break;
+                    }
                     return (float)shepardFreq;
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
                 default:
-                    return 440f;
+                    return SinusFrequency;
             }
         }
 
@@ -251,6 +395,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     TimerRunning = true;
                     _timer.Start();
                     _clickCount = 1;
+                    ShowDistanceAfterTimer = false;
                 }
                 else if (_clickCount == 1)
                 {
@@ -268,6 +413,8 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     _soundProvider.Amplitude = 0f;
                     _waveOut.Stop();
                     _soundActive = false;
+
+                    ShowDistanceAfterTimer = true;
                 }
                 else
                 {
@@ -296,6 +443,8 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             _soundProvider.Amplitude = 0f;
             _waveOut.Stop();
             _soundActive = false;
+
+            ShowDistanceAfterTimer = false;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -358,8 +507,9 @@ namespace Rothenberger.Ortungssimulator.ViewModels
     {
         public float Frequency { get; set; }
         public float Amplitude { get; set; }
+        public int NumTones { get; set; } = 6;
+        public float EnvelopeWidth { get; set; } = 2.0f;
         private float _phaseAngle;
-        private const int NumTones = 6;
 
         public override int Read(float[] buffer, int offset, int sampleCount)
         {
@@ -371,7 +521,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                 {
                     // Shepard-Ton: Überlagerung von Sinustönen im Oktavabstand mit abnehmender Amplitude
                     float freq = Frequency * (float)Math.Pow(2, i - NumTones / 2);
-                    float amp = Amplitude * (float)Math.Exp(-0.5 * Math.Pow((i - NumTones / 2) / 2.0, 2));
+                    float amp = Amplitude * (float)Math.Exp(-0.5 * Math.Pow((i - NumTones / 2) / EnvelopeWidth, 2));
                     value += amp * (float)Math.Sin(_phaseAngle * freq / Frequency);
                 }
                 buffer[n + offset] = value;

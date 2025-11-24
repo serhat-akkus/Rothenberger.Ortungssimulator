@@ -2,22 +2,38 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:vm="clr-namespace:Rothenberger.Ortungssimulator.ViewModels"
-        Title="Ortungssimulator" Height="1200" Width="1400">
+        Title="Ortungssimulator" Height="1200" Width="1500">
     <Window.DataContext>
         <vm:MainViewModel/>
     </Window.DataContext>
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto"/>
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
+
+        <!-- Timer und Distanzanzeige über dem Canvas -->
+        <StackPanel Grid.Row="0" Grid.Column="0" Margin="20,20,0,0" Orientation="Horizontal" HorizontalAlignment="Left">
+            <TextBlock FontSize="18" FontWeight="Bold"
+                       Text="{Binding Elapsed, StringFormat='Timer: {0:mm\\:ss\\.ff}'}"
+                       Margin="0,0,40,0"/>
+            <TextBlock FontSize="18" FontWeight="Bold"
+                       Text="{Binding DistanceToProbeMeter, StringFormat='Distanz zur Sonde: {0:F2} m'}"
+                       Visibility="{Binding ShowDistanceAfterTimer, Converter={StaticResource BoolToVisibilityConverter}}"/>
+        </StackPanel>
+
         <!-- Canvas für die Simulation -->
         <Canvas Name="SimCanvas"
+                Grid.Row="1" Grid.Column="0"
                 Width="1000" Height="1000"
                 Background="LightGray"
                 MouseMove="SimCanvas_MouseMove"
                 MouseLeftButtonDown="SimCanvas_MouseLeftButtonDown"
-                Margin="20">
+                Margin="20,0,0,0">
             <!-- X-förmige Sonde -->
             <Canvas x:Name="Probe"
                     Visibility="{Binding ProbeVisible, Converter={StaticResource BoolToVisibilityConverter}}"
@@ -33,19 +49,63 @@
                      Canvas.Left="{Binding ClickedX, Converter={StaticResource CenterEllipseConverter}, ConverterParameter=10}"
                      Canvas.Top="{Binding ClickedY, Converter={StaticResource CenterEllipseConverter}, ConverterParameter=10}"/>
         </Canvas>
-        <!-- Rechte Spalte: Timer und Skala -->
-        <StackPanel Grid.Column="1" Margin="40,20,20,20" VerticalAlignment="Top">
+
+        <!-- Rechte Spalte: Einstellungen und Label -->
+        <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="2" Margin="40,20,20,20" VerticalAlignment="Top">
             <TextBlock FontSize="24" FontWeight="Bold" Text="Ortungssimulator"/>
-            <TextBlock FontSize="18" Margin="0,20,0,0"
-                       Text="{Binding Elapsed, StringFormat='Timer: {0:mm\\:ss\\.ff}'}"
-                       Visibility="{Binding TimerRunning, Converter={StaticResource BoolToVisibilityConverter}}"/>
-            <TextBlock FontSize="18" Margin="0,20,0,0"
-                       Text="{Binding DistanceToProbeMeter, StringFormat='Distanz zur Sonde: {0:F2} m'}"
-                       Visibility="{Binding ShowScale, Converter={StaticResource BoolToVisibilityConverter}}"/>
             <ComboBox ItemsSource="{Binding ToneTypes}"
                       SelectedItem="{Binding SelectedToneType, Mode=TwoWay}"
+                      IsEnabled="{Binding TimerRunning, Converter={StaticResource InverseBoolConverter}}"
                       Margin="0,20,0,0"
                       FontSize="16"/>
+
+            <!-- Sinus-Parameter -->
+            <StackPanel Visibility="{Binding SelectedToneType, Converter={StaticResource SinusVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Frequenz (Hz):" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="20" Maximum="2000" Value="{Binding SinusFrequency, Mode=TwoWay}" TickFrequency="10" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding SinusFrequency, StringFormat={}{0} Hz}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Amplitude:" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="0" Maximum="1" Value="{Binding SinusAmplitude, Mode=TwoWay}" TickFrequency="0.01" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding SinusAmplitude, StringFormat={}{0:F2}}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Shepard-Parameter -->
+            <StackPanel Visibility="{Binding SelectedToneType, Converter={StaticResource ShepardVisibilityConverter}}">
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Grundfrequenz (Hz):" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="20" Maximum="2000" Value="{Binding ShepardBaseFrequency, Mode=TwoWay}" TickFrequency="10" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding ShepardBaseFrequency, StringFormat={}{0} Hz}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Frequenzbereich (Hz):" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="100" Maximum="2000" Value="{Binding ShepardFrequencyRange, Mode=TwoWay}" TickFrequency="10" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding ShepardFrequencyRange, StringFormat={}{0} Hz}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Anzahl Töne:" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="2" Maximum="12" Value="{Binding ShepardNumTones, Mode=TwoWay}" TickFrequency="1" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding ShepardNumTones, StringFormat={}{0}}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Amplitude:" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="0" Maximum="1" Value="{Binding ShepardAmplitude, Mode=TwoWay}" TickFrequency="0.01" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding ShepardAmplitude, StringFormat={}{0:F2}}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Envelope Width:" VerticalAlignment="Center" Width="120"/>
+                    <Slider Minimum="0.5" Maximum="5" Value="{Binding ShepardEnvelopeWidth, Mode=TwoWay}" TickFrequency="0.1" IsSnapToTickEnabled="True" Width="200"/>
+                    <TextBlock Text="{Binding ShepardEnvelopeWidth, StringFormat={}{0:F2}}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,18">
+                    <TextBlock Text="Sweep-Modus:" VerticalAlignment="Center" Width="120"/>
+                    <ComboBox ItemsSource="{Binding SweepModes}" SelectedItem="{Binding ShepardSweepMode, Mode=TwoWay}" Width="200"/>
+                    <TextBlock Text="{Binding ShepardSweepMode}" Margin="20,0,0,0" VerticalAlignment="Center"/>
+                </StackPanel>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Window>

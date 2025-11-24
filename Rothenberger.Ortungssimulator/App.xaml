@@ -6,5 +6,8 @@
     <Application.Resources>
         <conv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
         <conv:CenterEllipseConverter x:Key="CenterEllipseConverter"/>
+        <conv:SinusVisibilityConverter x:Key="SinusVisibilityConverter"/>
+        <conv:ShepardVisibilityConverter x:Key="ShepardVisibilityConverter"/>
+        <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
     </Application.Resources>
 </Application>
