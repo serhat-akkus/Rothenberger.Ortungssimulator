@@ -109,23 +109,34 @@
 
             <!-- Ergebnisliste unterhalb der Parameter -->
             <TextBlock FontSize="20" FontWeight="Bold" Text="Messungen" Margin="0,30,0,10"/>
-            <ListBox ItemsSource="{Binding Results}" Height="300">
+            <ListBox ItemsSource="{Binding Results}" Height="300"
+                     HorizontalAlignment="Stretch"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
-                        <StackPanel Orientation="Vertical" Margin="0,0,0,10">
-                            <TextBlock Text="{Binding Timestamp, StringFormat='Datum: {0:dd.MM.yyyy} Uhrzeit: {0:HH:mm:ss}'}" FontWeight="Bold"/>
-                            <TextBlock Text="{Binding Time, StringFormat='Zeit: {0:mm\\:ss\\.ff}'}"/>
-                            <TextBlock Text="{Binding Distance, StringFormat='Distanz: {0:F2} m'}"/>
-                            <TextBlock Text="{Binding ToneType, StringFormat='Tontyp: {0}'}"/>
-                            <TextBlock Text="{Binding SinusFrequency, StringFormat='Sinus-Frequenz: {0} Hz'}"/>
-                            <TextBlock Text="{Binding SinusAmplitude, StringFormat='Sinus-Amplitude: {0:F2}'}"/>
-                            <TextBlock Text="{Binding ShepardBaseFrequency, StringFormat='Shepard-Basisfrequenz: {0} Hz'}"/>
-                            <TextBlock Text="{Binding ShepardFrequencyRange, StringFormat='Shepard-Frequenzbereich: {0} Hz'}"/>
-                            <TextBlock Text="{Binding ShepardNumTones, StringFormat='Shepard-Anzahl Töne: {0}'}"/>
-                            <TextBlock Text="{Binding ShepardAmplitude, StringFormat='Shepard-Amplitude: {0:F2}'}"/>
-                            <TextBlock Text="{Binding ShepardEnvelopeWidth, StringFormat='Shepard-Envelope Width: {0:F2}'}"/>
-                            <TextBlock Text="{Binding ShepardSweepMode, StringFormat='Shepard-Sweep-Modus: {0}'}"/>
-                        </StackPanel>
+                        <Border BorderBrush="Gray" BorderThickness="1" CornerRadius="4" Padding="8" Margin="0,0,0,8">
+                            <StackPanel>
+                                <!-- Hauptwerte hervorgehoben -->
+                                <WrapPanel Margin="0,0,0,4" HorizontalAlignment="Stretch" ItemWidth="160">
+                                    <TextBlock Text="{Binding Timestamp, StringFormat='Datum: {0:dd.MM.yyyy}'}" FontWeight="Bold" FontSize="15" Margin="0,0,20,0"/>
+                                    <TextBlock Text="{Binding Timestamp, StringFormat='Uhrzeit: {0:HH:mm:ss}'}" FontWeight="Bold" FontSize="15" Margin="0,0,20,0"/>
+                                    <TextBlock Text="{Binding Time, StringFormat='Zeit: {0:mm\\:ss\\.ff}'}" FontWeight="Bold" FontSize="15" Margin="0,0,20,0"/>
+                                    <TextBlock Text="{Binding Distance, StringFormat='Distanz: {0:F2} m'}" FontWeight="Bold" FontSize="15" Margin="0,0,20,0"/>
+                                    <TextBlock Text="{Binding ToneType, StringFormat='Tontyp: {0}'}" FontWeight="Bold" FontSize="15"/>
+                                </WrapPanel>
+                                <!-- Nebenwerte kompakt und kleiner, umbrechend -->
+                                <WrapPanel Margin="0,4,0,0" HorizontalAlignment="Stretch" ItemWidth="160">
+                                    <TextBlock Text="{Binding SinusFrequency, StringFormat='Sinus-Freq: {0} Hz'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding SinusAmplitude, StringFormat='Sinus-Amp: {0:F2}'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardBaseFrequency, StringFormat='Shepard-Basis: {0} Hz'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardFrequencyRange, StringFormat='Shepard-Range: {0} Hz'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardNumTones, StringFormat='Shepard-Töne: {0}'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardAmplitude, StringFormat='Shepard-Amp: {0:F2}'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardEnvelopeWidth, StringFormat='Envelope: {0:F2}'}" FontSize="12" Margin="0,0,12,0"/>
+                                    <TextBlock Text="{Binding ShepardSweepMode, StringFormat='Sweep: {0}'}" FontSize="12" Margin="0,0,12,0"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
                     </DataTemplate>
                 </ListBox.ItemTemplate>
             </ListBox>
