@@ -9,5 +9,6 @@
         <conv:SinusVisibilityConverter x:Key="SinusVisibilityConverter"/>
         <conv:ShepardVisibilityConverter x:Key="ShepardVisibilityConverter"/>
         <conv:InverseBoolConverter x:Key="InverseBoolConverter"/>
+        <conv:ToneTypeParameterVisibilityConverter x:Key="ToneTypeParameterVisibilityConverter"/>
     </Application.Resources>
 </Application>
