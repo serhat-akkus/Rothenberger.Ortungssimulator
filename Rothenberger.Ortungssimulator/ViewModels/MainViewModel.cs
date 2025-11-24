@@ -1,12 +1,20 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Threading;
-using NAudio.Wave; // NAudio für Sound
+using NAudio.Wave;
 
 namespace Rothenberger.Ortungssimulator.ViewModels
 {
+    public enum ToneType
+    {
+        SinusLinear,
+        SinusLogarithmic,
+        Shepard
+    }
+
     public class MainViewModel : INotifyPropertyChanged
     {
         private const int CanvasSizePx = 1000;
@@ -30,8 +38,30 @@ namespace Rothenberger.Ortungssimulator.ViewModels
 
         // Audio
         private WaveOutEvent _waveOut;
-        private SineWaveProvider32 _sineProvider;
+        private ISoundProvider _soundProvider;
         private bool _soundActive;
+
+        public ObservableCollection<ToneType> ToneTypes { get; } = new ObservableCollection<ToneType>
+        {
+            ToneType.Shepard,
+            ToneType.SinusLinear,
+            ToneType.SinusLogarithmic
+        };
+
+        private ToneType _selectedToneType = ToneType.SinusLinear;
+        public ToneType SelectedToneType
+        {
+            get => _selectedToneType;
+            set
+            {
+                if (_selectedToneType != value)
+                {
+                    _selectedToneType = value;
+                    OnPropertyChanged();
+                    InitSoundProvider();
+                }
+            }
+        }
 
         public MainViewModel()
         {
@@ -42,15 +72,33 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                 Elapsed = Elapsed.Add(_timer.Interval);
             };
 
-            // Audio initialisieren
-            _sineProvider = new SineWaveProvider32();
-            _sineProvider.SetWaveFormat(44100, 1); // 44,1 kHz, Mono
-            _sineProvider.Frequency = 440f; // A-Ton
-            _sineProvider.Amplitude = 0f; // Start: kein Ton
-            _waveOut = new WaveOutEvent();
-            _waveOut.Init(_sineProvider);
+            InitSoundProvider();
 
             ResetSimulator();
+        }
+
+        private void InitSoundProvider()
+        {
+            _waveOut?.Stop();
+            _waveOut?.Dispose();
+
+            switch (SelectedToneType)
+            {
+                case ToneType.SinusLinear:
+                    _soundProvider = new SineWaveProvider32();
+                    break;
+                case ToneType.SinusLogarithmic:
+                    _soundProvider = new LogSineWaveProvider32();
+                    break;
+                case ToneType.Shepard:
+                    _soundProvider = new ShepardToneProvider32();
+                    break;
+            }
+            _soundProvider.SetWaveFormat(44100, 1);
+            _soundProvider.Frequency = 440f;
+            _soundProvider.Amplitude = 0f;
+            _waveOut = new WaveOutEvent();
+            _waveOut.Init(_soundProvider);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -141,19 +189,51 @@ namespace Rothenberger.Ortungssimulator.ViewModels
 
                 if (dist <= ProbeRadiusMeter)
                 {
-                    // Lautstärke berechnen: 1.0 = Sonde, 0.0 = Radius
-                    float amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                    float amplitude;
+                    switch (SelectedToneType)
+                    {
+                        case ToneType.SinusLinear:
+                            amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                            break;
+                        case ToneType.SinusLogarithmic:
+                            amplitude = (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter)); // log. Anstieg
+                            amplitude = Math.Max(0f, amplitude);
+                            break;
+                        case ToneType.Shepard:
+                            amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                            break;
+                        default:
+                            amplitude = 0f;
+                            break;
+                    }
                     if (!_soundActive)
                     {
                         _waveOut.Play();
                         _soundActive = true;
                     }
-                    _sineProvider.Amplitude = amplitude;
+                    _soundProvider.Amplitude = amplitude;
+                    _soundProvider.Frequency = GetFrequencyForToneType(dist);
                 }
                 else
                 {
-                    _sineProvider.Amplitude = 0f;
+                    _soundProvider.Amplitude = 0f;
                 }
+            }
+        }
+
+        private float GetFrequencyForToneType(double dist)
+        {
+            switch (SelectedToneType)
+            {
+                case ToneType.Shepard:
+                    // Shepard-Ton: Frequenz zyklisch im Bereich 220-880 Hz
+                    double norm = 1.0 - (dist / ProbeRadiusMeter);
+                    double shepardFreq = 220 + 660 * norm;
+                    return (float)shepardFreq;
+                case ToneType.SinusLinear:
+                case ToneType.SinusLogarithmic:
+                default:
+                    return 440f;
             }
         }
 
@@ -185,7 +265,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     OnPropertyChanged(nameof(DistanceToProbeMeter));
 
                     // Ton stoppen
-                    _sineProvider.Amplitude = 0f;
+                    _soundProvider.Amplitude = 0f;
                     _waveOut.Stop();
                     _soundActive = false;
                 }
@@ -213,7 +293,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             OnPropertyChanged(nameof(DistanceToProbeMeter));
 
             // Ton stoppen
-            _sineProvider.Amplitude = 0f;
+            _soundProvider.Amplitude = 0f;
             _waveOut.Stop();
             _soundActive = false;
         }
@@ -221,6 +301,84 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         protected void OnPropertyChanged([CallerMemberName] string name = null)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        }
+    }
+
+    // Interface für SoundProvider
+    public interface ISoundProvider : IWaveProvider
+    {
+        float Frequency { get; set; }
+        float Amplitude { get; set; }
+        void SetWaveFormat(int sampleRate, int channels);
+    }
+
+    // Sinus linear
+    public class SineWaveProvider32 : WaveProvider32, ISoundProvider
+    {
+        public float Frequency { get; set; }
+        public float Amplitude { get; set; }
+        private float _phaseAngle;
+
+        public override int Read(float[] buffer, int offset, int sampleCount)
+        {
+            int sampleRate = WaveFormat.SampleRate;
+            for (int n = 0; n < sampleCount; n++)
+            {
+                buffer[n + offset] = (float)(Amplitude * Math.Sin(_phaseAngle));
+                _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
+                if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
+            }
+            return sampleCount;
+        }
+    }
+
+    // Sinus logarithmisch
+    public class LogSineWaveProvider32 : WaveProvider32, ISoundProvider
+    {
+        public float Frequency { get; set; }
+        public float Amplitude { get; set; }
+        private float _phaseAngle;
+
+        public override int Read(float[] buffer, int offset, int sampleCount)
+        {
+            int sampleRate = WaveFormat.SampleRate;
+            for (int n = 0; n < sampleCount; n++)
+            {
+                // Logarithmischer Anstieg: Amplitude wird im ViewModel berechnet
+                buffer[n + offset] = (float)(Amplitude * Math.Sin(_phaseAngle));
+                _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
+                if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
+            }
+            return sampleCount;
+        }
+    }
+
+    // Shepard-Ton
+    public class ShepardToneProvider32 : WaveProvider32, ISoundProvider
+    {
+        public float Frequency { get; set; }
+        public float Amplitude { get; set; }
+        private float _phaseAngle;
+        private const int NumTones = 6;
+
+        public override int Read(float[] buffer, int offset, int sampleCount)
+        {
+            int sampleRate = WaveFormat.SampleRate;
+            for (int n = 0; n < sampleCount; n++)
+            {
+                float value = 0f;
+                for (int i = 0; i < NumTones; i++)
+                {
+                    // Shepard-Ton: Überlagerung von Sinustönen im Oktavabstand mit abnehmender Amplitude
+                    float freq = Frequency * (float)Math.Pow(2, i - NumTones / 2);
+                    float amp = Amplitude * (float)Math.Exp(-0.5 * Math.Pow((i - NumTones / 2) / 2.0, 2));
+                    value += amp * (float)Math.Sin(_phaseAngle * freq / Frequency);
+                }
+                buffer[n + offset] = value;
+                _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
+                if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
+            }
+            return sampleCount;
         }
     }
 
@@ -240,26 +398,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         {
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
-        }
-    }
-
-    // SineWaveProvider32 für NAudio
-    public class SineWaveProvider32 : WaveProvider32
-    {
-        public float Frequency { get; set; }
-        public float Amplitude { get; set; }
-        private float _phaseAngle;
-
-        public override int Read(float[] buffer, int offset, int sampleCount)
-        {
-            int sampleRate = WaveFormat.SampleRate;
-            for (int n = 0; n < sampleCount; n++)
-            {
-                buffer[n + offset] = (float)(Amplitude * Math.Sin(_phaseAngle));
-                _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
-                if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
-            }
-            return sampleCount;
         }
     }
 }

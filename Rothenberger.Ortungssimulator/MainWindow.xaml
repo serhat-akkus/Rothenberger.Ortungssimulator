@@ -42,6 +42,10 @@
             <TextBlock FontSize="18" Margin="0,20,0,0"
                        Text="{Binding DistanceToProbeMeter, StringFormat='Distanz zur Sonde: {0:F2} m'}"
                        Visibility="{Binding ShowScale, Converter={StaticResource BoolToVisibilityConverter}}"/>
+            <ComboBox ItemsSource="{Binding ToneTypes}"
+                      SelectedItem="{Binding SelectedToneType, Mode=TwoWay}"
+                      Margin="0,20,0,0"
+                      FontSize="16"/>
         </StackPanel>
     </Grid>
 </Window>
