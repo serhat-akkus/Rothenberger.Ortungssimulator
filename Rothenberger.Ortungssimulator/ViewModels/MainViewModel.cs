@@ -3,6 +3,7 @@ using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using System.Windows.Threading;
+using NAudio.Wave; // NAudio für Sound
 
 namespace Rothenberger.Ortungssimulator.ViewModels
 {
@@ -27,6 +28,11 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         private double _clickedX;
         private double _clickedY;
 
+        // Audio
+        private WaveOutEvent _waveOut;
+        private SineWaveProvider32 _sineProvider;
+        private bool _soundActive;
+
         public MainViewModel()
         {
             CanvasClickCommand = new RelayCommand(OnCanvasClick);
@@ -35,6 +41,14 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             {
                 Elapsed = Elapsed.Add(_timer.Interval);
             };
+
+            // Audio initialisieren
+            _sineProvider = new SineWaveProvider32();
+            _sineProvider.SetWaveFormat(44100, 1); // 44,1 kHz, Mono
+            _sineProvider.Frequency = 440f; // A-Ton
+            _sineProvider.Amplitude = 0f; // Start: kein Ton
+            _waveOut = new WaveOutEvent();
+            _waveOut.Init(_sineProvider);
 
             ResetSimulator();
         }
@@ -118,6 +132,29 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         {
             MouseX = x;
             MouseY = y;
+
+            if (_clickCount == 1) // Nur nach erstem Klick
+            {
+                double dx = (MouseX - ProbeX) * MeterPerPixel;
+                double dy = (MouseY - ProbeY) * MeterPerPixel;
+                double dist = Math.Sqrt(dx * dx + dy * dy);
+
+                if (dist <= ProbeRadiusMeter)
+                {
+                    // Lautstärke berechnen: 1.0 = Sonde, 0.0 = Radius
+                    float amplitude = (float)(1.0 - (dist / ProbeRadiusMeter));
+                    if (!_soundActive)
+                    {
+                        _waveOut.Play();
+                        _soundActive = true;
+                    }
+                    _sineProvider.Amplitude = amplitude;
+                }
+                else
+                {
+                    _sineProvider.Amplitude = 0f;
+                }
+            }
         }
 
         private void OnCanvasClick(object parameter)
@@ -146,6 +183,11 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     _timer.Stop();
                     _clickCount = 2;
                     OnPropertyChanged(nameof(DistanceToProbeMeter));
+
+                    // Ton stoppen
+                    _sineProvider.Amplitude = 0f;
+                    _waveOut.Stop();
+                    _soundActive = false;
                 }
                 else
                 {
@@ -169,6 +211,11 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             ClickedX = 0;
             ClickedY = 0;
             OnPropertyChanged(nameof(DistanceToProbeMeter));
+
+            // Ton stoppen
+            _sineProvider.Amplitude = 0f;
+            _waveOut.Stop();
+            _soundActive = false;
         }
 
         protected void OnPropertyChanged([CallerMemberName] string name = null)
@@ -193,6 +240,26 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         {
             add { CommandManager.RequerySuggested += value; }
             remove { CommandManager.RequerySuggested -= value; }
+        }
+    }
+
+    // SineWaveProvider32 für NAudio
+    public class SineWaveProvider32 : WaveProvider32
+    {
+        public float Frequency { get; set; }
+        public float Amplitude { get; set; }
+        private float _phaseAngle;
+
+        public override int Read(float[] buffer, int offset, int sampleCount)
+        {
+            int sampleRate = WaveFormat.SampleRate;
+            for (int n = 0; n < sampleCount; n++)
+            {
+                buffer[n + offset] = (float)(Amplitude * Math.Sin(_phaseAngle));
+                _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
+                if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
+            }
+            return sampleCount;
         }
     }
 }
