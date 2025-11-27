@@ -14,7 +14,7 @@ namespace Rothenberger.Ortungssimulator.Converters
             var paramName = parameter?.ToString();
 
             // Sinus-Typen: Sinus, SinusLinear, SinusLogarithmic
-            if ((toneType == "Sinus" || toneType == "SinusLinear" || toneType == "SinusLogarithmic") &&
+            if ((toneType == "SinusLinear" || toneType == "SinusLogarithmic" || toneType == "SinusExponential") &&
                 (paramName == "SinusFrequency" || paramName == "SinusAmplitude"))
                 return Visibility.Visible;
 

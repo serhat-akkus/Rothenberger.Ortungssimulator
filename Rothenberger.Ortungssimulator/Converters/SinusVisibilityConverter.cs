@@ -10,9 +10,11 @@ namespace Rothenberger.Ortungssimulator.Converters
     {
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
-            if (value is ToneType tone)
+            if (value is ToneType toneType)
             {
-                return (tone == ToneType.SinusLinear || tone == ToneType.SinusLogarithmic)
+                return (toneType == ToneType.SinusLinear ||
+                        toneType == ToneType.SinusLogarithmic ||
+                        toneType == ToneType.SinusExponential)
                     ? Visibility.Visible
                     : Visibility.Collapsed;
             }

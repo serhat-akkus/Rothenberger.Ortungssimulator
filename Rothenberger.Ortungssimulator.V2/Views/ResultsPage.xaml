@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Rothenberger.Ortungssimulator.V2.Views.ResultsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    BackgroundColor="White">
+
+    <StackLayout Padding="20">
+        <Label Text="Ergebnisse" FontSize="32" HorizontalOptions="Center"/>
+        <CollectionView ItemsSource="{Binding RunResults}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="{Binding Name}" />
+                        <Label Text="{Binding ToneType}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Timestamp}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Time}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Distance}" Margin="10,0,0,0"/>
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+        <Button Text="Speichern und fortfahren" Command="{Binding SaveAndContinueCommand}" Margin="0,20,0,0"/>
+    </StackLayout>
+</ContentPage>

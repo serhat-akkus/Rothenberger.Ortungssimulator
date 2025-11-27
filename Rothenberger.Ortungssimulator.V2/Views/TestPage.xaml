@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Rothenberger.Ortungssimulator.V2.Views.TestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Rothenberger.Ortungssimulator.V2.ViewModels"
+    BackgroundColor="White">
+
+    <Grid RowDefinitions="Auto,*" ColumnDefinitions="1000,Auto">
+        <!-- Labels für Timer und Distanz oben -->
+        <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" Margin="0,20,0,0">
+            <Label Text="{Binding TimerText}" FontSize="24" />
+            <Label Text="{Binding DistanceText}" FontSize="24" Margin="20,0,0,0" />
+        </StackLayout>
+
+        <!-- Canvas und Button darunter -->
+        <Grid Grid.Row="1" Grid.Column="0">
+            <GraphicsView
+                x:Name="CanvasView"
+                HeightRequest="1000"
+                WidthRequest="1000" />
+
+            <Button
+                Text="{Binding StartRunButtonText}"
+                IsVisible="{Binding IsRunNotStarted}"
+                Command="{Binding StartRunCommand}"
+                VerticalOptions="Center"
+                HorizontalOptions="Center"
+                WidthRequest="200"
+                HeightRequest="60"
+                BackgroundColor="White"
+                TextColor="Black"
+                Opacity="0.95"
+                InputTransparent="False" />
+        </Grid>
+
+        <!-- Pfeilbox -->
+        <Border
+            Grid.Row="1"
+            Grid.Column="1"
+            VerticalOptions="Center"
+            Padding="20"
+            IsVisible="{Binding IsArrowBoxVisible}">
+            <Grid>
+                <Image Source="arrow.png"
+                       Rotation="{Binding ArrowRotation}"
+                       HorizontalOptions="Center"
+                       VerticalOptions="Center"
+                       WidthRequest="80"
+                       HeightRequest="80" />
+            </Grid>
+        </Border>
+
+        <!-- Ergebnisliste -->
+        <CollectionView
+            Grid.Row="1"
+            Grid.Column="1"
+            ItemsSource="{Binding RunResults}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <StackLayout Orientation="Horizontal">
+                        <Label Text="{Binding Name}" />
+                        <Label Text="{Binding ToneType}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Timestamp}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Time}" Margin="10,0,0,0"/>
+                        <Label Text="{Binding Distance}" Margin="10,0,0,0"/>
+                    </StackLayout>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

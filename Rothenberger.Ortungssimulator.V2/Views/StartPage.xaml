@@ -1,0 +1,28 @@
+    <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Rothenberger.Ortungssimulator.V2.ViewModels"
+             x:Class="Rothenberger.Ortungssimulator.V2.Views.StartPage">
+    <ContentPage.BindingContext>
+        <vm:StartViewModel />
+    </ContentPage.BindingContext>
+    <VerticalStackLayout Padding="20" Spacing="16">
+        <Entry Placeholder="Name" Text="{Binding UserName}" />
+        <Label Text="{Binding UserNameError}" TextColor="Red" FontSize="12" IsVisible="{Binding UserNameError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <Picker Title="Ton-Typ auswählen"
+                ItemsSource="{Binding ToneTypes}"
+                ItemDisplayBinding="{Binding Name}"
+                SelectedItem="{Binding SelectedToneType}" />
+        <Label Text="{Binding ToneTypeError}" TextColor="Red" FontSize="12" IsVisible="{Binding ToneTypeError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <Entry Placeholder="Anzahl Test-Runs"
+               Keyboard="Numeric"
+               Text="{Binding TestRunCount}" />
+        <Label Text="{Binding RunCountError}" TextColor="Red" FontSize="12" IsVisible="{Binding RunCountError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <CheckBox IsChecked="{Binding ShowArrow}" />
+        <Label Text="Hilfspfeil anzeigen" />
+        <Button Text="Start"
+                Command="{Binding StartCommand}" />
+    </VerticalStackLayout>
+</ContentPage>

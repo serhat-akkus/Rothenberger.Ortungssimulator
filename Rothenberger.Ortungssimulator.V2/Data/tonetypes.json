@@ -1,0 +1,5 @@
+[
+    { "Id": "sinus", "Name": "Sinus" },
+    { "Id": "square", "Name": "Rechteck" },
+    { "Id": "triangle", "Name": "Dreieck" }
+]

@@ -19,6 +19,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
     {
         SinusLinear,
         SinusLogarithmic,
+        SinusExponential, // NEU
         Shepard
     }
 
@@ -142,7 +143,8 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         {
             ToneType.Shepard,
             ToneType.SinusLinear,
-            ToneType.SinusLogarithmic
+            ToneType.SinusLogarithmic,
+            ToneType.SinusExponential // NEU
         };
 
         public ObservableCollection<SweepMode> SweepModes { get; } = new ObservableCollection<SweepMode>
@@ -192,6 +194,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             {
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
+                case ToneType.SinusExponential: // NEU
                     _soundProvider = new SineWaveProvider32();
                     _soundProvider.SetWaveFormat(44100, 1);
                     _soundProvider.Frequency = SinusFrequency;
@@ -219,6 +222,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             {
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
+                case ToneType.SinusExponential: // NEU
                     _soundProvider.Frequency = SinusFrequency;
                     // Amplitude NICHT setzen!
                     break;
@@ -232,7 +236,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     }
                     break;
             }
-            // Ton ggf. aktualisieren:
             UpdateSoundIfActive();
         }
 
@@ -346,6 +349,12 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                             amplitude = SinusAmplitude * (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter));
                             amplitude = Math.Max(0f, amplitude);
                             break;
+                        case ToneType.SinusExponential: // NEU
+                            // Exponentiell ansteigend beim Annähern, logarithmisch abfallend beim Entfernen
+                            double norm = 1.0 - (dist / ProbeRadiusMeter);
+                            amplitude = SinusAmplitude * (float)((Math.Exp(4 * norm) - 1) / (Math.Exp(4) - 1));
+                            amplitude = Math.Max(0f, Math.Min(SinusAmplitude, amplitude));
+                            break;
                         case ToneType.Shepard:
                             amplitude = ShepardAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
                             break;
@@ -373,7 +382,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             switch (SelectedToneType)
             {
                 case ToneType.Shepard:
-                    // Shepard-Ton: Frequenz zyklisch im Bereich einer Oktave
                     double norm = 1.0 - (dist / ProbeRadiusMeter);
                     double shepardFreq;
                     switch (ShepardSweepMode)
@@ -394,6 +402,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     return (float)shepardFreq;
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
+                case ToneType.SinusExponential: // NEU
                 default:
                     return SinusFrequency;
             }
