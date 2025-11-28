@@ -25,6 +25,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private Point probePosition;
         [ObservableProperty] private Point clickPointPosition;
         [ObservableProperty] private double arrowRotation = 0;
+        [ObservableProperty] private Point currentMousePosition;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -36,6 +37,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private bool arrowEnabled = false;
         private string userName = "";
         private string toneType = "";
+        private IDispatcherTimer arrowUpdateTimer; // Typ ändern!
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
@@ -59,19 +61,26 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             IsRunNotStarted = false;
             IsArrowBoxVisible = arrowEnabled;
-            IsProbeVisible = false;      // Sonde ausblenden
-            IsClickPointVisible = false; // Klickpunkt ausblenden
+            IsProbeVisible = false;
+            IsClickPointVisible = false;
             DistanceText = "";
             TimerText = "00:00";
-            // Zufällige Sonde platzieren
             var rnd = new Random();
             probeLogicalPosition = new Point(rnd.NextDouble() * CanvasSizePx, rnd.NextDouble() * CanvasSizePx);
             ProbePosition = probeLogicalPosition;
-            // Timer starten
             timer = new System.Timers.Timer(1000);
             runStartTime = DateTime.Now;
             timer.Elapsed += Timer_Elapsed;
             timer.Start();
+
+            // KORREKT: DispatcherTimer für Pfeilrotation
+            if (arrowEnabled)
+            {
+                arrowUpdateTimer = Dispatcher.GetForCurrentThread().CreateTimer();
+                arrowUpdateTimer.Interval = TimeSpan.FromMilliseconds(50);
+                arrowUpdateTimer.Tick += ArrowUpdateTimer_Tick;
+                arrowUpdateTimer.Start();
+            }
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -80,10 +89,26 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             TimerText = elapsed.ToString(@"mm\:ss");
         }
 
+        private void ArrowUpdateTimer_Tick(object sender, EventArgs e)
+        {
+            UpdateArrowToProbe();
+        }
+
+        private void StopArrowTimer()
+        {
+            if (arrowUpdateTimer != null)
+            {
+                arrowUpdateTimer.Stop();
+                arrowUpdateTimer.Tick -= ArrowUpdateTimer_Tick;
+                arrowUpdateTimer = null;
+            }
+        }
+
         public void OnCanvasClicked(Point mousePosition)
         {
             if (IsRunNotStarted) return;
             timer?.Stop();
+            StopArrowTimer(); // NEU: Timer beenden
             IsClickPointVisible = true;
             ClickPointPosition = mousePosition;
             IsProbeVisible = true;
@@ -136,13 +161,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             await Shell.Current.Navigation.PushAsync(resultsPage);
         }
 
-        // Pfeil-Rotation berechnen
-        public void UpdateArrow(Point mousePosition)
+        // NEU: Methode zur kontinuierlichen Pfeilrotation
+        public void UpdateArrowToProbe()
         {
-            if (!arrowEnabled || isRunNotStarted) return;
-            var dx = probeLogicalPosition.X - mousePosition.X;
-            var dy = probeLogicalPosition.Y - mousePosition.Y;
-            arrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
+            // Von der Mausposition zur Sonde
+            double dx = ProbePosition.X - CurrentMousePosition.X;
+            double dy = ProbePosition.Y - CurrentMousePosition.Y;
+            ArrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
         }
     }
 }

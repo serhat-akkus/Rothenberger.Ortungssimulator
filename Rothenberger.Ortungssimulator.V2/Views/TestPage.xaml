@@ -7,49 +7,49 @@
     BackgroundColor="White">
 
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="1000,Auto">
-        <!-- Labels für Timer und Distanz oben -->
+        <!-- Labels fÃ¼r Timer und Distanz oben -->
         <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" Margin="0,20,0,0">
             <Label Text="{Binding TimerText}" FontSize="24" />
             <Label Text="{Binding DistanceText}" FontSize="24" Margin="20,0,0,0" />
         </StackLayout>
 
         <!-- Canvas und Button darunter -->
-        <Grid Grid.Row="1" Grid.Column="0">
+        <AbsoluteLayout Grid.Row="1" Grid.Column="0" HeightRequest="1000" WidthRequest="1000">
             <GraphicsView
                 x:Name="CanvasView"
                 HeightRequest="1000"
-                WidthRequest="1000" />
+                WidthRequest="1000"
+                AbsoluteLayout.LayoutBounds="0,0,1000,1000"
+                AbsoluteLayout.LayoutFlags="None" />
+
+            <Border
+                x:Name="ArrowBorder"
+                HeightRequest="120"
+                WidthRequest="120"
+                IsVisible="{Binding IsArrowBoxVisible}"
+                InputTransparent="True"
+                AbsoluteLayout.LayoutBounds="880,0,120,120"
+                AbsoluteLayout.LayoutFlags="None">
+                <GraphicsView
+                    x:Name="ArrowView"
+                    HeightRequest="120"
+                    WidthRequest="120"
+                    InputTransparent="True" />
+            </Border>
 
             <Button
                 Text="{Binding StartRunButtonText}"
                 IsVisible="{Binding IsRunNotStarted}"
                 Command="{Binding StartRunCommand}"
-                VerticalOptions="Center"
-                HorizontalOptions="Center"
                 WidthRequest="200"
                 HeightRequest="60"
                 BackgroundColor="White"
                 TextColor="Black"
                 Opacity="0.95"
-                InputTransparent="False" />
-        </Grid>
-
-        <!-- Pfeilbox -->
-        <Border
-            Grid.Row="1"
-            Grid.Column="1"
-            VerticalOptions="Center"
-            Padding="20"
-            IsVisible="{Binding IsArrowBoxVisible}">
-            <Grid>
-                <Image Source="arrow.png"
-                       Rotation="{Binding ArrowRotation}"
-                       HorizontalOptions="Center"
-                       VerticalOptions="Center"
-                       WidthRequest="80"
-                       HeightRequest="80" />
-            </Grid>
-        </Border>
+                InputTransparent="False"
+                AbsoluteLayout.LayoutBounds="400,470,200,60"
+                AbsoluteLayout.LayoutFlags="None" />
+        </AbsoluteLayout>
 
         <!-- Ergebnisliste -->
         <CollectionView

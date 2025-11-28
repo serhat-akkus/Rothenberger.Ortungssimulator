@@ -14,48 +14,63 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             _viewModel = new TestPageViewModel();
             BindingContext = _viewModel;
             CanvasView.StartInteraction += CanvasView_StartInteraction;
+            CanvasView.MoveHoverInteraction += CanvasView_TouchMove;
             CanvasView.Drawable = new TestPageDrawable(this);
+            ArrowView.Drawable = new ArrowBoxDrawable(_viewModel);
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            _viewModel.CurrentMousePosition = new Point(500, 500); // Canvas-Mitte
         }
 
         private void CanvasView_StartInteraction(object sender, TouchEventArgs e)
         {
             var point = e.Touches.First();
             _viewModel.OnCanvasClicked(point);
-            _viewModel.UpdateArrow(point);
+
             CanvasView.Invalidate();
+            ArrowView.Invalidate();
+        }
+
+        private void CanvasView_TouchMove(object sender, TouchEventArgs e)
+        {
+            var point = e.Touches.First();
+            _viewModel.CurrentMousePosition = point;
+            _viewModel.UpdateArrowToProbe();
+            ArrowView.Invalidate();
+
+            System.Diagnostics.Debug.WriteLine($"Mouse: {_viewModel.CurrentMousePosition}, Probe: {_viewModel.ProbePosition}, Rotation: {_viewModel.ArrowRotation}");
         }
 
         private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            // Canvas neu zeichnen, wenn Sichtbarkeit geändert wurde
             if (e.PropertyName == nameof(TestPageViewModel.IsProbeVisible) ||
                 e.PropertyName == nameof(TestPageViewModel.IsClickPointVisible))
             {
                 CanvasView.Invalidate();
+            }
+            if (e.PropertyName == nameof(TestPageViewModel.IsArrowBoxVisible) ||
+                e.PropertyName == nameof(TestPageViewModel.ArrowRotation))
+            {
+                ArrowView.Invalidate();
             }
         }
 
         private class TestPageDrawable : IDrawable
         {
             private readonly TestPage _page;
-
-            public TestPageDrawable(TestPage page)
-            {
-                _page = page;
-            }
-
+            public TestPageDrawable(TestPage page) { _page = page; }
             public void Draw(ICanvas canvas, RectF dirtyRect)
             {
-                // Hintergrund hellgrau füllen
+                // Hintergrund
                 canvas.FillColor = Colors.LightGray;
                 canvas.FillRectangle(dirtyRect);
 
-                var vm = _page._viewModel;
-                if (vm == null)
-                    return;
+                // Schwarzer Rand
+                canvas.StrokeColor = Colors.Black;
+                canvas.StrokeSize = 2;
+                canvas.DrawRectangle(dirtyRect);
 
-                // Sonde zeichnen (X-förmig, rot)
+                var vm = _page._viewModel;
+                if (vm == null) return;
                 if (vm.IsProbeVisible)
                 {
                     var p = vm.ProbePosition;
@@ -64,13 +79,50 @@ namespace Rothenberger.Ortungssimulator.V2.Views
                     canvas.DrawLine((float)p.X - 10, (float)p.Y - 10, (float)p.X + 10, (float)p.Y + 10);
                     canvas.DrawLine((float)p.X + 10, (float)p.Y - 10, (float)p.X - 10, (float)p.Y + 10);
                 }
-                // Klickpunkt (blauer Punkt)
                 if (vm.IsClickPointVisible)
                 {
                     var p = vm.ClickPointPosition;
                     canvas.FillColor = Colors.Blue;
                     canvas.FillCircle((float)p.X, (float)p.Y, 5);
                 }
+            }
+        }
+
+        private class ArrowBoxDrawable : IDrawable
+        {
+            private readonly TestPageViewModel _vm;
+            public ArrowBoxDrawable(TestPageViewModel vm) { _vm = vm; }
+            public void Draw(ICanvas canvas, RectF dirtyRect)
+            {
+                if (!_vm.IsArrowBoxVisible) return;
+                canvas.SaveState();
+
+                // Mittelpunkt der Box
+                float centerX = dirtyRect.Width / 2;
+                float centerY = dirtyRect.Height / 2;
+                canvas.Translate(centerX, centerY);
+                canvas.Rotate((float)_vm.ArrowRotation);
+
+                // Schaft
+                float shaftLength = 28;
+                float arrowHeadLength = 12;
+                float arrowHeadWidth = 16;
+
+                // Linie endet direkt vor dem Dreieck
+                canvas.StrokeColor = Colors.Black;
+                canvas.StrokeSize = 6;
+                canvas.DrawLine(-shaftLength / 2, 0, shaftLength / 2, 0);
+
+                // Dreieck: Spitze auf der Linie, Basis hinter dem Linienende
+                canvas.FillColor = Colors.Black;
+                var arrowHead = new PathF();
+                arrowHead.MoveTo(shaftLength / 2 + arrowHeadLength, 0); // Spitze des Dreiecks (vorne)
+                arrowHead.LineTo(shaftLength / 2, -arrowHeadWidth / 2); // links hinten
+                arrowHead.LineTo(shaftLength / 2, arrowHeadWidth / 2);  // rechts hinten
+                arrowHead.Close();
+                canvas.FillPath(arrowHead);
+
+                canvas.RestoreState();
             }
         }
     }
