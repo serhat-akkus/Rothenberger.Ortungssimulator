@@ -14,7 +14,7 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             _viewModel = new TestPageViewModel();
             BindingContext = _viewModel;
             CanvasView.StartInteraction += CanvasView_StartInteraction;
-            CanvasView.MoveHoverInteraction += CanvasView_TouchMove;
+            CanvasView.MoveHoverInteraction += CanvasView_MoveHoverInteraction;
             CanvasView.Drawable = new TestPageDrawable(this);
             ArrowView.Drawable = new ArrowBoxDrawable(_viewModel);
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
@@ -30,7 +30,7 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             ArrowView.Invalidate();
         }
 
-        private void CanvasView_TouchMove(object sender, TouchEventArgs e)
+        private void CanvasView_MoveHoverInteraction(object sender, TouchEventArgs e)
         {
             var point = e.Touches.First();
             _viewModel.CurrentMousePosition = point;
