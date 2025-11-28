@@ -36,8 +36,6 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             _viewModel.CurrentMousePosition = point;
             _viewModel.UpdateArrowToProbe();
             ArrowView.Invalidate();
-
-            System.Diagnostics.Debug.WriteLine($"Mouse: {_viewModel.CurrentMousePosition}, Probe: {_viewModel.ProbePosition}, Rotation: {_viewModel.ArrowRotation}");
         }
 
         private void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)

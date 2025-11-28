@@ -36,11 +36,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private Point probeLogicalPosition;
         private bool arrowEnabled = false;
         private string userName = "";
-        private string toneType = "";
+        private ToneType selectedToneType;
         private IDispatcherTimer arrowUpdateTimer; // Typ ändern!
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
+
+        public ToneType SelectedToneType { get; private set; }
 
         public TestPageViewModel()
         {
@@ -48,11 +50,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             CanvasClickedCommand = new RelayCommand<Point>(OnCanvasClicked);
         }
 
-        public void Initialize(string name, string toneType, int runCount, bool arrow)
+        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow)
         {
             userName = name;
-            this.toneType = toneType;
-            totalRuns = runCount; // Wert wird gesetzt
+            SelectedToneType = selectedToneType;
+            this.selectedToneType = selectedToneType; // Fix
+            totalRuns = runCount;
             arrowEnabled = arrow;
             startRunButtonText = $"Starte Test-Run {currentRun}";
         }
@@ -121,7 +124,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             RunResults.Add(new TestRunResult
             {
                 Name = userName,
-                ToneType = toneType,
+                ToneType = selectedToneType.Name,
                 Timestamp = DateTime.Now,
                 Time = DateTime.Now - runStartTime,
                 Distance = dist,
@@ -148,14 +151,14 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             // CSV speichern
             var date = DateTime.Now.ToString("yyMMdd", CultureInfo.InvariantCulture);
             var arrowStr = arrowEnabled ? "ja" : "nein";
-            var fileName = $"{date}_{userName}_{toneType}_Hilfspfeil_{arrowStr}.csv";
+            var fileName = $"{date}_{userName}_{selectedToneType?.Id}_Hilfspfeil_{arrowStr}.csv";
             var csvLines = RunResults.Select(r =>
-                $"{r.Name};{r.ToneType};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
+                $"{r.Name};{selectedToneType?.Id};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
             var csv = string.Join(Environment.NewLine, csvLines);
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
             // Navigation zur Ergebnis-Seite
-            var resultsPageVm = new ResultsPageViewModel(RunResults, userName, toneType, arrowEnabled);
+            var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
             var resultsPage = new ResultsPage();
             resultsPage.BindingContext = resultsPageVm;
             await Shell.Current.Navigation.PushAsync(resultsPage);

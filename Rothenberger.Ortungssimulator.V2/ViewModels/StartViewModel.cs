@@ -65,7 +65,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var testPage = new TestPage();
             if (testPage.BindingContext is TestPageViewModel vm)
             {
-                vm.Initialize(UserName, SelectedToneType?.Name ?? string.Empty, TestRunCount, ShowArrow);
+                vm.Initialize(UserName, SelectedToneType, TestRunCount, ShowArrow);
             }
             await Shell.Current.Navigation.PushAsync(testPage);
         }
