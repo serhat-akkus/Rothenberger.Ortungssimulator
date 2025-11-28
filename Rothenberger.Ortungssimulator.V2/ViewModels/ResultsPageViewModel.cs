@@ -40,16 +40,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
 
-            var page = Application.Current.MainPage;
-            bool copy = await page.DisplayAlert(
-                "Datei gespeichert",
-                $"Die Ergebnisse wurden gespeichert:\n{path}\n\nPfad in Zwischenablage kopieren?",
-                "Kopieren", "Weiter");
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                bool copy = await page.DisplayAlertAsync(
+                    "Datei gespeichert",
+                    $"Die Ergebnisse wurden gespeichert:\n{path}\n\nPfad in Zwischenablage kopieren?",
+                    "Kopieren", "Weiter");
 
-            if (copy)
-                await Clipboard.Default.SetTextAsync(path);
+                if (copy)
+                    await Clipboard.Default.SetTextAsync(path);
 
-            await Shell.Current.Navigation.PopToRootAsync();
+                await Shell.Current.Navigation.PopToRootAsync();
+            }
         }
     }
 }
