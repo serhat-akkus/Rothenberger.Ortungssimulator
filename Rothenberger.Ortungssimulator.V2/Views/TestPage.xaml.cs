@@ -21,6 +21,15 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             _viewModel.CurrentMousePosition = new Point(500, 500); // Canvas-Mitte
         }
 
+        private void Canvas_PointerMoved(object sender, PointerEventArgs e)
+        {
+            if (BindingContext is TestPageViewModel vm)
+            {
+                var position = e.GetPosition((Element?)sender);
+                vm.UpdateCurrentMousePosition(new Point(position.Value.X, position.Value.Y));
+            }
+        }
+
         private void CanvasView_StartInteraction(object sender, TouchEventArgs e)
         {
             var point = e.Touches.First();

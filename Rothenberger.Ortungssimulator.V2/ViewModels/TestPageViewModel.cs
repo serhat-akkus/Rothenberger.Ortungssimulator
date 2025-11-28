@@ -6,13 +6,22 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Globalization;
 using Rothenberger.Ortungssimulator.V2.Views;
+using NAudio.Wave;
+using Rothenberger.Ortungssimulator.V2.Audio;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public partial class TestPageViewModel : ObservableObject
     {
+        // Canvas: 1000 px Seitenlänge
         private const int CanvasSizePx = 1000;
+
+        // 1000 Pixel entsprechen 10 m => 1 Pixel = 0,01 m
         private const double MeterPerPixel = 0.01;
+
+        private const double ProbeRadiusMeters = 5.0;
+        // 5 m => 5 / 0.01 = 500 px
+        private const double ProbeRadiusPixels = ProbeRadiusMeters / MeterPerPixel; // 500 px
 
         [ObservableProperty] private string timerText = "00:00";
         [ObservableProperty] private string distanceText = "";
@@ -30,14 +39,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
         private int currentRun = 1;
-        private int totalRuns = 3; // Beispielwert, kann übergeben werden
+        private int totalRuns = 3;
         private System.Timers.Timer timer;
         private DateTime runStartTime;
         private Point probeLogicalPosition;
         private bool arrowEnabled = false;
         private string userName = "";
         private ToneType selectedToneType;
-        private IDispatcherTimer arrowUpdateTimer; // Typ ändern!
+        private IDispatcherTimer arrowUpdateTimer;
+
+        // Audio: NAudio
+        private IWavePlayer? waveOut;
+        private SineWaveProvider? sineProvider;
+        private bool isAudioActive;
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
@@ -54,7 +68,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             userName = name;
             SelectedToneType = selectedToneType;
-            this.selectedToneType = selectedToneType; // Fix
+            this.selectedToneType = selectedToneType;
             totalRuns = runCount;
             arrowEnabled = arrow;
             startRunButtonText = $"Starte Test-Run {currentRun}";
@@ -68,15 +82,17 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             IsClickPointVisible = false;
             DistanceText = "";
             TimerText = "00:00";
+
             var rnd = new Random();
+            // Sonde innerhalb des 1000px-Canvas zufällig platzieren
             probeLogicalPosition = new Point(rnd.NextDouble() * CanvasSizePx, rnd.NextDouble() * CanvasSizePx);
             ProbePosition = probeLogicalPosition;
+
             timer = new System.Timers.Timer(1000);
             runStartTime = DateTime.Now;
             timer.Elapsed += Timer_Elapsed;
             timer.Start();
 
-            // KORREKT: DispatcherTimer für Pfeilrotation
             if (arrowEnabled)
             {
                 arrowUpdateTimer = Dispatcher.GetForCurrentThread().CreateTimer();
@@ -84,6 +100,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 arrowUpdateTimer.Tick += ArrowUpdateTimer_Tick;
                 arrowUpdateTimer.Start();
             }
+
+            InitializeAudio();
+            isAudioActive = true;
+            UpdateAudioForMousePosition();
         }
 
         private void Timer_Elapsed(object sender, ElapsedEventArgs e)
@@ -95,6 +115,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private void ArrowUpdateTimer_Tick(object sender, EventArgs e)
         {
             UpdateArrowToProbe();
+            UpdateAudioForMousePosition();
         }
 
         private void StopArrowTimer()
@@ -111,16 +132,20 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             if (IsRunNotStarted) return;
             timer?.Stop();
-            StopArrowTimer(); // NEU: Timer beenden
+            StopArrowTimer();
+
+            StopAudio();
+
             IsClickPointVisible = true;
-            ClickPointPosition = mousePosition;
+            var clamped = ClampToCanvas(mousePosition);
+            ClickPointPosition = clamped;
             IsProbeVisible = true;
-            // Distanz berechnen
-            var dx = (mousePosition.X - probeLogicalPosition.X) * MeterPerPixel;
-            var dy = (mousePosition.Y - probeLogicalPosition.Y) * MeterPerPixel;
+
+            var dx = (clamped.X - probeLogicalPosition.X) * MeterPerPixel;
+            var dy = (clamped.Y - probeLogicalPosition.Y) * MeterPerPixel;
             var dist = Math.Sqrt(dx * dx + dy * dy);
             DistanceText = $"Distanz: {dist:F2} m";
-            // Ergebnis speichern
+
             RunResults.Add(new TestRunResult
             {
                 Name = userName,
@@ -130,17 +155,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 Distance = dist,
                 ArrowEnabled = arrowEnabled
             });
-            // Run abschließen
+
             if (currentRun >= totalRuns)
             {
-                // Ergebnisse anzeigen und speichern
                 ShowResultsAndSave();
             }
             else
             {
                 currentRun++;
                 StartRunButtonText = $"Starte Test-Run {currentRun}";
-                IsRunNotStarted = true; // Button erscheint wieder
+                IsRunNotStarted = true;
                 CanvasBackground = Colors.LightGray;
                 IsArrowBoxVisible = false;
             }
@@ -148,7 +172,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private async void ShowResultsAndSave()
         {
-            // CSV speichern
             var date = DateTime.Now.ToString("yyMMdd", CultureInfo.InvariantCulture);
             var arrowStr = arrowEnabled ? "ja" : "nein";
             var fileName = $"{date}_{userName}_{selectedToneType?.Id}_Hilfspfeil_{arrowStr}.csv";
@@ -157,20 +180,92 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var csv = string.Join(Environment.NewLine, csvLines);
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
-            // Navigation zur Ergebnis-Seite
+
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
             var resultsPage = new ResultsPage();
             resultsPage.BindingContext = resultsPageVm;
             await Shell.Current.Navigation.PushAsync(resultsPage);
         }
 
-        // NEU: Methode zur kontinuierlichen Pfeilrotation
         public void UpdateArrowToProbe()
         {
-            // Von der Mausposition zur Sonde
             double dx = ProbePosition.X - CurrentMousePosition.X;
             double dy = ProbePosition.Y - CurrentMousePosition.Y;
             ArrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
+        }
+
+        // ---- Audio-Logik (NAudio) ----
+
+        public void UpdateCurrentMousePosition(Point mousePosition)
+        {
+            CurrentMousePosition = ClampToCanvas(mousePosition);
+
+            if (!IsRunNotStarted)
+            {
+                UpdateAudioForMousePosition();
+            }
+        }
+
+        private static Point ClampToCanvas(Point p)
+        {
+            var x = Math.Min(Math.Max(p.X, 0), CanvasSizePx);
+            var y = Math.Min(Math.Max(p.Y, 0), CanvasSizePx);
+            return new Point(x, y);
+        }
+
+        private void InitializeAudio()
+        {
+            StopAudio();
+
+            sineProvider = new SineWaveProvider(sampleRate: 44100, frequency: 440.0, initialVolume: 0.0f);
+            waveOut = new WaveOutEvent
+            {
+                DesiredLatency = 100
+            };
+
+            waveOut.Init(sineProvider);
+            waveOut.Play();
+        }
+
+        private void StopAudio()
+        {
+            isAudioActive = false;
+
+            if (waveOut != null)
+            {
+                try { waveOut.Stop(); } catch { }
+                waveOut.Dispose();
+                waveOut = null;
+            }
+
+            if (sineProvider != null)
+            {
+                sineProvider.Dispose();
+                sineProvider = null;
+            }
+        }
+
+        private void UpdateAudioForMousePosition()
+        {
+            if (!isAudioActive || sineProvider == null)
+                return;
+
+            double dxPx = CurrentMousePosition.X - ProbePosition.X;
+            double dyPx = CurrentMousePosition.Y - ProbePosition.Y;
+            double distancePx = Math.Sqrt(dxPx * dxPx + dyPx * dyPx);
+
+            if (distancePx <= ProbeRadiusPixels)
+            {
+                double normalized = 1.0 - (distancePx / ProbeRadiusPixels); // 1 nahe, 0 am Rand
+                double perceptual = Math.Pow(normalized, 0.8);
+
+                sineProvider.SetVolume((float)perceptual);
+                sineProvider.SetFrequency(440.0);
+            }
+            else
+            {
+                sineProvider.SetVolume(0.0f);
+            }
         }
     }
 }

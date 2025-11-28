@@ -21,7 +21,8 @@
                 HeightRequest="1000"
                 WidthRequest="1000"
                 AbsoluteLayout.LayoutBounds="0,0,1000,1000"
-                AbsoluteLayout.LayoutFlags="None" />
+                AbsoluteLayout.LayoutFlags="None"
+                PointerMoved="CanvasView_PointerMoved" />
 
             <Border
                 x:Name="ArrowBorder"
