@@ -13,16 +13,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public partial class TestPageViewModel : ObservableObject
     {
-        // Canvas: 1000 px Seitenlänge
-        private const int CanvasSizePx = 1000;
-
-        // 1000 Pixel entsprechen 10 m => 1 Pixel = 0,01 m
-        private const double MeterPerPixel = 0.01;
-
-        private const double ProbeRadiusMeters = 5.0;
-        // 5 m => 5 / 0.01 = 500 px
-        private const double ProbeRadiusPixels = ProbeRadiusMeters / MeterPerPixel; // 500 px
-
         [ObservableProperty] private string timerText = "00:00";
         [ObservableProperty] private string distanceText = "";
         [ObservableProperty] private string startRunButtonText = "Starte Test-Run 1";
@@ -46,7 +36,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private bool arrowEnabled = false;
         private string userName = "";
         private ToneType selectedToneType;
-        private IDispatcherTimer arrowUpdateTimer;
 
         // Audio: NAudio
         private IWavePlayer? waveOut;
@@ -61,6 +50,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public ICommand CanvasClickedCommand { get; }
 
         public ToneType SelectedToneType { get; private set; }
+
+        // Felder
+        private readonly Graphics.CanvasHelper _canvas = new Graphics.CanvasHelper();
+        private ArrowHelper _arrowHelper = new ArrowHelper();
 
         public TestPageViewModel()
         {
@@ -88,8 +81,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             TimerText = "00:00";
 
             var rnd = new Random();
-            // Sonde innerhalb des 1000px-Canvas zufällig platzieren
-            probeLogicalPosition = new Point(rnd.NextDouble() * CanvasSizePx, rnd.NextDouble() * CanvasSizePx);
+            // Sonde zufällig platzieren
+            probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
             timer = new System.Timers.Timer(1000);
@@ -99,10 +92,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             if (arrowEnabled)
             {
-                arrowUpdateTimer = Dispatcher.GetForCurrentThread().CreateTimer();
-                arrowUpdateTimer.Interval = TimeSpan.FromMilliseconds(50);
-                arrowUpdateTimer.Tick += ArrowUpdateTimer_Tick;
-                arrowUpdateTimer.Start();
+                _arrowHelper.Start(
+                    Dispatcher.GetForCurrentThread(),
+                    TimeSpan.FromMilliseconds(50),
+                    () => ProbePosition,
+                    () => CurrentMousePosition,
+                    rot => ArrowRotation = rot,
+                    () => UpdateAudioForMousePosition());
             }
 
             InitializeAudio();
@@ -122,20 +118,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             TimerText = elapsed.ToString(@"mm\:ss");
         }
 
-        private void ArrowUpdateTimer_Tick(object sender, EventArgs e)
-        {
-            UpdateArrowToProbe();
-            UpdateAudioForMousePosition();
-        }
-
         private void StopArrowTimer()
         {
-            if (arrowUpdateTimer != null)
-            {
-                arrowUpdateTimer.Stop();
-                arrowUpdateTimer.Tick -= ArrowUpdateTimer_Tick;
-                arrowUpdateTimer = null;
-            }
+            _arrowHelper.Stop();
         }
 
         public void OnCanvasClicked(Point mousePosition)
@@ -147,13 +132,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             StopAudio();
 
             IsClickPointVisible = true;
-            var clamped = ClampToCanvas(mousePosition);
+            var clamped = _canvas.ClampToCanvas(mousePosition);
             ClickPointPosition = clamped;
             IsProbeVisible = true;
 
-            var dx = (clamped.X - probeLogicalPosition.X) * MeterPerPixel;
-            var dy = (clamped.Y - probeLogicalPosition.Y) * MeterPerPixel;
-            var dist = Math.Sqrt(dx * dx + dy * dy);
+            var dist = _canvas.CalculateDistanceMeters(probeLogicalPosition, clamped);
             DistanceText = $"Distanz: {dist:F2} m";
 
             RunResults.Add(new TestRunResult
@@ -197,8 +180,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             await Shell.Current.Navigation.PushAsync(resultsPage);
         }
 
+        // UpdateArrowToProbe(): optional entfernen oder delegieren
         public void UpdateArrowToProbe()
         {
+            // bleibt für direkte Aufrufe verfügbar, nutzt gleiche Formel
             double dx = ProbePosition.X - CurrentMousePosition.X;
             double dy = ProbePosition.Y - CurrentMousePosition.Y;
             ArrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
@@ -208,19 +193,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         public void UpdateCurrentMousePosition(Point mousePosition)
         {
-            CurrentMousePosition = ClampToCanvas(mousePosition);
+            CurrentMousePosition = _canvas.ClampToCanvas(mousePosition);
 
             if (!IsRunNotStarted)
             {
                 UpdateAudioForMousePosition();
             }
-        }
-
-        private static Point ClampToCanvas(Point p)
-        {
-            var x = Math.Min(Math.Max(p.X, 0), CanvasSizePx);
-            var y = Math.Min(Math.Max(p.Y, 0), CanvasSizePx);
-            return new Point(x, y);
         }
 
         private void InitializeAudio()
@@ -235,13 +213,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
             if (toneId == "shepard")
             {
-                // Shepard: Start ohne Richtung (none)
+                // Parameter aus JSON lesen mit sinnvollen Defaults
+                float baseFreq = (float)(selectedToneType?.BaseFrequency ?? 110.0);
+                float duration = (float)(selectedToneType?.Duration ?? 6.0);
+                int sampleRate = selectedToneType?.SampleRate ?? 44100;
+                int numComponents = selectedToneType?.NumComponents ?? 8;
+
                 shepardProvider = new ShepardToneProvider(
-                    baseFreq: 110f,
+                    baseFreq: baseFreq,
                     direction: "none",
-                    duration: 6f,
-                    sampleRate: 44100,
-                    numComponents: 8);
+                    duration: duration,
+                    sampleRate: sampleRate,
+                    numComponents: numComponents);
+
                 shepardProvider.SetGain(0f);
                 waveOut.Init(shepardProvider);
             }
@@ -277,138 +261,50 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (!isAudioActive)
                 return;
 
-            double dxPx = CurrentMousePosition.X - ProbePosition.X;
-            double dyPx = CurrentMousePosition.Y - ProbePosition.Y;
-            double distancePx = Math.Sqrt(dxPx * dxPx + dyPx * dyPx);
-            double distanceMeters = distancePx * MeterPerPixel;
-
+            double distanceMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
 
-            if (toneId == "shepard")
+            double normalized = _canvas.NormalizeDistance(distanceMeters);
+
+            switch (toneId)
             {
-                if (shepardProvider == null) return;
+                case "shepard":
+                    _previousDistanceMeters = AudioUpdateHelper.HandleShepard(
+                        shepardProvider!,
+                        distanceMeters,
+                        normalized,
+                        _previousDistanceMeters,
+                        MovementEpsilonMeters);
+                    break;
 
-                if (distanceMeters <= ProbeRadiusMeters)
-                {
-                    // Normalisierung für Lautstärke (näher => lauter)
-                    double normalized = 1.0 - (distanceMeters / ProbeRadiusMeters);
-                    normalized = Math.Clamp(normalized, 0.0, 1.0);
+                case "sinus_linear":
+                    lastFrequency = AudioUpdateHelper.HandleSinusLinear(
+                        sineProvider!,
+                        selectedToneType,
+                        normalized,
+                        lastFrequency);
+                    break;
 
-                    shepardProvider.SetGain((float)Math.Pow(normalized, 0.8));
+                case "sinus_log":
+                    lastFrequency = AudioUpdateHelper.HandleSinusLog(
+                        sineProvider!,
+                        selectedToneType,
+                        normalized,
+                        lastFrequency);
+                    break;
 
-                    // Bewegungsrichtung bestimmen
-                    if (_previousDistanceMeters.HasValue)
-                    {
-                        double delta = _previousDistanceMeters.Value - distanceMeters;
-                        string direction;
-                        if (Math.Abs(delta) < MovementEpsilonMeters)
-                            direction = "none";
-                        else if (delta > 0)
-                            direction = "up";   // Annäherung -> steigende Illusion
-                        else
-                            direction = "down"; // Entfernen -> fallende Illusion
+                case "tonleiter_diskret":
+                    lastFrequency = AudioUpdateHelper.HandleTonleiterDiskret(
+                        sineProvider!,
+                        selectedToneType,
+                        normalized,
+                        distanceMeters,
+                        lastFrequency);
+                    break;
 
-                        shepardProvider.SetDirection(direction);
-                    }
-
-                    _previousDistanceMeters = distanceMeters;
-                }
-                else
-                {
-                    // außerhalb: Lautstärke aus
-                    shepardProvider.SetGain(0f);
-                    shepardProvider.SetDirection("none");
-                    _previousDistanceMeters = null;
-                }
-
-                return; // Shepard komplett behandelt, anderen Code überspringen
-            }
-
-            // --- Bisherige Sinus-Logik ---
-            if (sineProvider == null) return;
-
-            if (distanceMeters <= ProbeRadiusMeters)
-            {
-                double normalized = 1.0 - (distanceMeters / ProbeRadiusMeters);
-                normalized = Math.Clamp(normalized, 0.0, 1.0);
-                double perceptual = Math.Pow(normalized, 0.8);
-                sineProvider.SetVolume((float)perceptual);
-
-                var minFreqOpt = selectedToneType?.MinFrequency;
-                var maxFreqOpt = selectedToneType?.MaxFrequency;
-
-                switch (toneId)
-                {
-                    case "sinus_linear":
-                        if (minFreqOpt.HasValue && maxFreqOpt.HasValue && maxFreqOpt.Value > minFreqOpt.Value)
-                        {
-                            double freq = minFreqOpt.Value + (maxFreqOpt.Value - minFreqOpt.Value) * normalized;
-                            lastFrequency = freq;
-                            sineProvider.SetFrequency(freq);
-                        }
-                        else
-                        {
-                            if (!lastFrequency.HasValue && minFreqOpt.HasValue)
-                                lastFrequency = minFreqOpt.Value;
-                            sineProvider.SetFrequency(lastFrequency ?? 0.0);
-                        }
-                        break;
-
-                    case "sinus_log":
-                        if (minFreqOpt.HasValue && maxFreqOpt.HasValue && maxFreqOpt.Value > minFreqOpt.Value && minFreqOpt.Value > 0)
-                        {
-                            double logBase;
-                            var logBaseStr = selectedToneType?.LogBase;
-                            if (string.Equals(logBaseStr, "e", StringComparison.OrdinalIgnoreCase))
-                                logBase = Math.E;
-                            else if (!double.TryParse(logBaseStr, System.Globalization.NumberStyles.Float,
-                                     System.Globalization.CultureInfo.InvariantCulture, out logBase) ||
-                                     logBase <= 0.0 || Math.Abs(logBase - 1.0) < double.Epsilon)
-                                logBase = Math.E;
-
-                            double k = Math.Log(maxFreqOpt.Value / minFreqOpt.Value) / Math.Log(logBase);
-                            double freq = minFreqOpt.Value * Math.Pow(logBase, normalized * k);
-                            lastFrequency = freq;
-                            sineProvider.SetFrequency(freq);
-                        }
-                        else
-                        {
-                            if (!lastFrequency.HasValue && minFreqOpt.HasValue)
-                                lastFrequency = minFreqOpt.Value;
-                            sineProvider.SetFrequency(lastFrequency ?? 0.0);
-                        }
-                        break;
-
-                    case "tonleiter_diskret":
-                        {
-                            var list = selectedToneType?.Frequencies;
-                            if (list != null && list.Count > 0)
-                            {
-                                double stepMeters = 0.2;
-                                int index = (int)Math.Floor(distanceMeters / stepMeters);
-                                if (index < 0) index = 0;
-                                if (index >= list.Count) index = list.Count - 1;
-                                double freq = list[index];
-                                lastFrequency = freq;
-                                sineProvider.SetFrequency(freq);
-                            }
-                            else
-                            {
-                                sineProvider.SetFrequency(lastFrequency ?? 0.0);
-                            }
-                            break;
-                        }
-
-                    default:
-                        if (!lastFrequency.HasValue && minFreqOpt.HasValue)
-                            lastFrequency = minFreqOpt.Value;
-                        sineProvider.SetFrequency(lastFrequency ?? 0.0);
-                        break;
-                }
-            }
-            else
-            {
-                sineProvider.SetVolume(0.0f);
+                default:
+                    _previousDistanceMeters = AudioUpdateHelper.HandleDefault(sineProvider, shepardProvider);
+                    break;
             }
         }
     }
