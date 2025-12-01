@@ -44,16 +44,15 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private SineWaveProvider? sineProvider;
         private ShepardToneProvider? shepardProvider;
         private bool isAudioActive;
-        private double? lastFrequency; // letzte verwendete Frequenz merken
+        private double? lastFrequency;
         private double? _previousDistanceMeters;
-        private const double MovementEpsilonMeters = 0.01; // Schwelle für "still"
+        private const double MovementEpsilonMeters = 0.01;
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
 
         public ToneType SelectedToneType { get; private set; }
 
-        // Felder
         private readonly Graphics.CanvasHelper _canvas = new Graphics.CanvasHelper();
         private ArrowHelper _arrowHelper = new ArrowHelper();
 
@@ -83,7 +82,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             TimerText = "00:00";
 
             var rnd = new Random();
-            // Sonde zufällig platzieren
             probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
@@ -106,7 +104,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             InitializeAudio();
             isAudioActive = true;
 
-            // Initiale Frequenz setzen: MinFrequency (falls vorhanden), sonst letzte Frequenz, sonst 0 Hz
             var minFreqInit = selectedToneType?.MinFrequency;
             lastFrequency = minFreqInit ?? lastFrequency ?? 0.0;
             sineProvider?.SetFrequency(lastFrequency.Value);
@@ -176,13 +173,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
 
-            // Bestätigungs-Popup (nur "Weiter")
             var page = Application.Current?.MainPage;
             if (page != null)
             {
                 var confirm = new RunsCompletedPopup();
                 var result = await page.ShowPopupAsync(confirm);
-                // result true bei "Weiter"; danach zur Ergebnisseite
             }
 
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
@@ -190,16 +185,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             await Shell.Current.Navigation.PushAsync(resultsPage);
         }
 
-        // UpdateArrowToProbe(): optional entfernen oder delegieren
         public void UpdateArrowToProbe()
         {
-            // bleibt für direkte Aufrufe verfügbar, nutzt gleiche Formel
             double dx = ProbePosition.X - CurrentMousePosition.X;
             double dy = ProbePosition.Y - CurrentMousePosition.Y;
             ArrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
         }
-
-        // ---- Audio-Logik (NAudio) ----
 
         public void UpdateCurrentMousePosition(Point mousePosition)
         {
@@ -223,19 +214,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
             if (toneId == "shepard")
             {
-                // Parameter aus JSON lesen mit sinnvollen Defaults
-                float baseFreq = (float)(selectedToneType?.BaseFrequency ?? 110.0);
-                float duration = (float)(selectedToneType?.Duration ?? 6.0);
-                int sampleRate = selectedToneType?.SampleRate ?? 44100;
-                int numComponents = selectedToneType?.NumComponents ?? 8;
-
-                shepardProvider = new ShepardToneProvider(
-                    baseFreq: baseFreq,
-                    direction: "none",
-                    duration: duration,
-                    sampleRate: sampleRate,
-                    numComponents: numComponents);
-
+                shepardProvider = ShepardToneFactory.CreateFromToneType(selectedToneType);
                 shepardProvider.SetGain(0f);
                 waveOut.Init(shepardProvider);
             }

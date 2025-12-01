@@ -16,23 +16,23 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             if (normalized > 0.0)
             {
+                // Lautstärke (leicht kompensierte Wahrnehmung)
                 shepardProvider.SetGain((float)Math.Pow(normalized, 0.8));
 
-                if (previousDistanceMeters.HasValue)
+                // Nur aktualisieren, wenn Bewegung über Schwellwert
+                if (!previousDistanceMeters.HasValue ||
+                    Math.Abs(previousDistanceMeters.Value - distanceMeters) >= movementEpsilonMeters)
                 {
-                    double delta = previousDistanceMeters.Value - distanceMeters;
-                    string direction =
-                        Math.Abs(delta) < movementEpsilonMeters ? "none" :
-                        (delta > 0 ? "up" : "down");
-
-                    shepardProvider.SetDirection(direction);
+                    shepardProvider.SetDistance((float)distanceMeters);
+                    previousDistanceMeters = distanceMeters;
                 }
 
-                return distanceMeters;
+                // Rückgabe: letzte „fixierte“ Distanz
+                return previousDistanceMeters;
             }
 
+            // Deaktivieren
             shepardProvider.SetGain(0f);
-            shepardProvider.SetDirection("none");
             return null;
         }
 
@@ -90,7 +90,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 {
                     double logBase;
                     var logBaseStr = toneType?.LogBase;
-                    if (string.Equals(logBaseStr, "e", StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(logBaseStr, "e", System.StringComparison.OrdinalIgnoreCase))
                         logBase = Math.E;
                     else if (!double.TryParse(logBaseStr, System.Globalization.NumberStyles.Float,
                              System.Globalization.CultureInfo.InvariantCulture, out logBase) ||
@@ -158,7 +158,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             if (shepardProvider != null)
             {
                 shepardProvider.SetGain(0f);
-                shepardProvider.SetDirection("none");
             }
             return null;
         }

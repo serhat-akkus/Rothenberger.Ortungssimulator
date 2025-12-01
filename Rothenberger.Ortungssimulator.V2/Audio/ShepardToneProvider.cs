@@ -3,43 +3,82 @@ using System;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
-    // Shepard-Ton Provider mit dynamischer Richtung (up/down/none) und Gain-Steuerung.
+    // Positionsbasierter Shepard-Ton (Distanz -> Basisfrequenz)
+    // Tonerzeugung angepasst: Gauß-Amplitude (centerFreq, sigma) + dynamische Normalisierung (Peak-Tracking)
+    // Kein zeitlicher Zyklus, Frequenz ausschließlich von Maus-/Distanzposition abhängig.
     public sealed class ShepardToneProvider : ISampleProvider
     {
         private readonly int _sampleRate;
         private readonly float _baseFreq;
-        private readonly float _duration;
+        private readonly float _centerFreq;
+        private readonly float _sigma;
+        private readonly float _radiusMeters;
         private readonly int _numComponents;
-        private long _samplePosition;
+        private readonly float _octaveSpan;
+        private readonly float[] _frequencyLut;
+        private readonly int _lutResolution;
+        private readonly float[] _phases;
+
+        private float _currentDistance;
+        private float _userGain;
+
+        // Dynamische Normalisierung (Peak)
+        private bool _normalizationEnabled = true;
+        private float _normGain = 1f;
+        private float _targetPeak = 0.9f;
+        private float _attack = 0.04f;
+        private float _release = 0.005f;
+
+        // Master-Level (zusätzlicher globaler Skalierungsfaktor)
+        private float _masterLevel = 0.7f;
 
         private readonly object _lock = new();
-        private string _direction; // "up", "down", "none"
-        private float _gain;       // 0..1
 
         public WaveFormat WaveFormat { get; }
 
         public ShepardToneProvider(
             float baseFreq = 440f,
-            string direction = "none",
-            float duration = 5f,
+            float radiusMeters = 5f,
+            float duration = 5f,      // nur für Signatur beibehalten
             int sampleRate = 44100,
-            int numComponents = 10)
+            int numComponents = 10,
+            float octaveSpan = 2f,
+            int lutResolution = 512,
+            float centerFreq = 440f,
+            float sigma = 1.0f,
+            float masterLevel = 0.7f,
+            bool normalizationEnabled = true)
         {
             _baseFreq = Math.Max(20f, baseFreq);
-            _direction = NormalizeDirection(direction);
-            _duration = Math.Max(0.1f, duration);
+            _centerFreq = Math.Clamp(centerFreq, 20f, 20000f);
+            _sigma = Math.Max(0.05f, sigma);
+            _radiusMeters = Math.Max(0.5f, radiusMeters);
             _sampleRate = sampleRate;
             _numComponents = Math.Max(4, numComponents);
+            _octaveSpan = Math.Max(0.25f, octaveSpan);
+            _lutResolution = Math.Clamp(lutResolution, 32, 8192);
+
             WaveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
-            _samplePosition = 0;
-            _gain = 1.0f;
+            _frequencyLut = new float[_lutResolution];
+            _phases = new float[_numComponents];
+
+            _currentDistance = _radiusMeters;
+            _userGain = 1f;
+            _masterLevel = Math.Clamp(masterLevel, 0.01f, 4f);
+            _normalizationEnabled = normalizationEnabled;
+
+            BuildFrequencyLut();
         }
 
-        public void SetDirection(string direction)
+        private void BuildFrequencyLut()
         {
-            lock (_lock)
+            for (int i = 0; i < _lutResolution; i++)
             {
-                _direction = NormalizeDirection(direction);
+                float n = (float)i / (_lutResolution - 1);
+                float inv = 1f - n;
+                float f = _baseFreq * (float)Math.Pow(2.0, _octaveSpan * inv);
+                f = Math.Clamp(f, 20f, 20000f);
+                _frequencyLut[i] = f;
             }
         }
 
@@ -47,74 +86,130 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             lock (_lock)
             {
-                _gain = Math.Clamp(gain, 0f, 1f);
+                _userGain = Math.Clamp(gain, 0f, 1f);
             }
         }
 
-        public void Reset()
+        public void SetMasterLevel(float level)
         {
             lock (_lock)
             {
-                _samplePosition = 0;
+                _masterLevel = Math.Clamp(level, 0.01f, 4f);
             }
         }
 
-        private static string NormalizeDirection(string d) =>
-            d switch
+        public void EnableNormalization(bool enabled)
+        {
+            lock (_lock)
             {
-                "up" => "up",
-                "down" => "down",
-                _ => "none"
-            };
+                _normalizationEnabled = enabled;
+            }
+        }
+
+        public void SetDistance(float distanceMeters)
+        {
+            lock (_lock)
+            {
+                _currentDistance = Math.Clamp(distanceMeters, 0f, _radiusMeters);
+            }
+        }
+
+        public void SetPosition(float xMeters, float yMeters)
+        {
+            float d = MathF.Sqrt(xMeters * xMeters + yMeters * yMeters);
+            SetDistance(d);
+        }
+
+        public float GetCurrentBaseFrequency()
+        {
+            lock (_lock)
+            {
+                return LookupFrequency(_currentDistance);
+            }
+        }
+
+        private float LookupFrequency(float distance)
+        {
+            float n = distance / _radiusMeters;
+            n = Math.Clamp(n, 0f, 1f);
+            float pos = n * (_lutResolution - 1);
+            int i0 = (int)pos;
+            int i1 = Math.Min(i0 + 1, _lutResolution - 1);
+            float frac = pos - i0;
+            return _frequencyLut[i0] + (_frequencyLut[i1] - _frequencyLut[i0]) * frac;
+        }
 
         public int Read(float[] buffer, int offset, int count)
         {
-            string localDirection;
             float localGain;
+            float localDistance;
+            bool localNormEnabled;
+            float localMaster;
             lock (_lock)
             {
-                localDirection = _direction;
-                localGain = _gain;
+                localGain = _userGain;
+                localDistance = _currentDistance;
+                localNormEnabled = _normalizationEnabled;
+                localMaster = _masterLevel;
             }
+
+            float baseFrequency = LookupFrequency(localDistance);
+
+            float peak = 0f;
 
             for (int n = 0; n < count; n++)
             {
-                float t = (float)_samplePosition / _sampleRate;
-
-                // Grundfrequenzverlauf abhängig von Richtung
-                float freq = _baseFreq;
-                if (localDirection == "up")
-                {
-                    freq = _baseFreq * (float)Math.Pow(2.0, t / _duration);
-                }
-                else if (localDirection == "down")
-                {
-                    freq = _baseFreq * (float)Math.Pow(2.0, -t / _duration);
-                }
-                // "none" => konstante Basisfrequenz
-
                 float sample = 0f;
 
-                // Komponenten über Oktaven
                 for (int k = 0; k < _numComponents; k++)
                 {
-                    float f = freq * (float)Math.Pow(2.0, k);
-                    // Gauß-Gewichtung im log2 Raum (Zentrum ca. 440 Hz)
-                    float log2Ratio = (float)(Math.Log(f / 440.0) / Math.Log(2.0));
-                    float amp = (float)Math.Exp(-0.5 * log2Ratio * log2Ratio);
-                    sample += amp * (float)Math.Sin(2.0 * Math.PI * f * t);
+                    float fComponent = baseFrequency * (float)Math.Pow(2.0, k);
+                    if (fComponent > 20000f) break;
+
+                    float log2Ratio = (float)(Math.Log(fComponent / _centerFreq) / Math.Log(2.0));
+                    float scaled = log2Ratio / _sigma;
+                    float amp = (float)Math.Exp(-0.5f * scaled * scaled);
+
+                    float phaseInc = 2f * MathF.PI * fComponent / _sampleRate;
+                    _phases[k] += phaseInc;
+                    if (_phases[k] > MathF.PI * 2f)
+                        _phases[k] -= MathF.PI * 2f;
+
+                    sample += amp * MathF.Sin(_phases[k]);
                 }
 
-                // Mittelung + globaler Gain
-                buffer[offset + n] = sample / _numComponents * 0.2f * localGain;
+                // Psychoakustische Pegel-Normalisierung: sqrt statt volle Division
+                sample /= MathF.Sqrt(_numComponents);
 
-                _samplePosition++;
-                // Zyklischer Reset, damit die Exponentialfunktion nicht unendlich läuft
-                if (_samplePosition >= (long)(_duration * _sampleRate))
+                float abs = Math.Abs(sample);
+                if (abs > peak) peak = abs;
+
+                buffer[offset + n] = sample;
+            }
+
+            if (localNormEnabled && peak > 0f)
+            {
+                // Ziel: Peak -> _targetPeak
+                float desiredGain = _targetPeak / peak;
+                if (desiredGain < _normGain)
                 {
-                    _samplePosition = 0;
+                    // Absenken (Release langsamer)
+                    _normGain = _normGain * (1f - _release) + desiredGain * _release;
+                }
+                else
+                {
+                    // Anheben (Attack schneller)
+                    _normGain = _normGain * (1f - _attack) + desiredGain * _attack;
                 }
             }
+
+            float finalGain = localGain * localMaster * _normGain;
+
+            for (int n = 0; n < count; n++)
+            {
+                buffer[offset + n] *= finalGain;
+            }
+
             return count;
         }
     }

@@ -46,9 +46,16 @@
   {
     "Id": "shepard",
     "Name": "Shepard",
-    "BaseFrequency": 110,
-    "Duration": 6,
-    "SampleRate": 44100,
-    "NumComponents": 8
+    "fs": 44100,
+    "base_freq": 55,
+    "num_tones": 10,
+    "center_freq": 440,
+    "sigma": 1.0,
+    "radius_meters": 5.0,
+    "octave_span": 2.0,
+    "lut_resolution": 2048,
+    "master_level": 0.9,
+    "normalization_enabled": true,
+    "duration": 6
   }
 ]
