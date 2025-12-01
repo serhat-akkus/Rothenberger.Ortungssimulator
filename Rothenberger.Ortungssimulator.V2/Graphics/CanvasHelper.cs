@@ -1,4 +1,4 @@
-using Microsoft.Maui.Graphics;
+﻿using Microsoft.Maui.Graphics;
 
 namespace Rothenberger.Ortungssimulator.V2.Graphics
 {
