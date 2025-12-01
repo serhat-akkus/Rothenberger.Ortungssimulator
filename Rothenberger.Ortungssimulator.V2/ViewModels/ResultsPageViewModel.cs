@@ -1,12 +1,12 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Rothenberger.Ortungssimulator.V2.Models;
 using Rothenberger.Ortungssimulator.V2.Views;
 using CommunityToolkit.Maui.Views;
+using System.IO;
 using CommunityToolkit.Maui.Extensions;
-using CommunityToolkit.Maui.Core;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -39,21 +39,32 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var time = now.ToString("HHmmss", CultureInfo.InvariantCulture);
             var arrowStr = ArrowEnabled ? "ja" : "nein";
             var fileName = $"{date}_{time}_{UserName}_{ToneType}_Hilfspfeil_{arrowStr}.csv";
+
             var csvLines = RunResults.Select(r =>
                 $"{r.Name};{r.ToneType};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
+
             var csv = string.Join(Environment.NewLine, csvLines);
-            var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
-            File.WriteAllText(path, csv);
+
+            string finalPath;
+            try
+            {
+                var documents = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
+                var projectDir = Path.Combine(documents, "Rothenberger.Ortungssimulator");
+                Directory.CreateDirectory(projectDir);
+                finalPath = Path.Combine(projectDir, fileName);
+                File.WriteAllText(finalPath, csv);
+            }
+            catch
+            {
+                finalPath = Path.Combine(FileSystem.AppDataDirectory, fileName);
+                File.WriteAllText(finalPath, csv);
+            }
 
             var page = Application.Current?.MainPage;
             if (page != null)
             {
-                var popup = new SaveResultsPopup(path);
-                var result = await page.ShowPopupAsync(popup);
-                if (result is IPopupResult popupResult && !popupResult.WasDismissedByTappingOutsideOfPopup)
-                {
-                    await Shell.Current.Navigation.PopToRootAsync();
-                }
+                var popup = new SaveResultsPopup(finalPath);
+                await page.ShowPopupAsync(popup);
             }
         }
     }

@@ -8,8 +8,7 @@ using System.Globalization;
 using Rothenberger.Ortungssimulator.V2.Views;
 using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
-using CommunityToolkit.Maui.Views;
-using CommunityToolkit.Maui.Extensions;
+using System.IO;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -27,8 +26,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private Point clickPointPosition;
         [ObservableProperty] private double arrowRotation = 0;
         [ObservableProperty] private Point currentMousePosition;
-        [ObservableProperty]
-        bool isRunsCompletedVisible;
+        [ObservableProperty] bool isRunsCompletedVisible;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -41,7 +39,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private string userName = "";
         private ToneType selectedToneType;
 
-        // Audio: NAudio
         private IWavePlayer? waveOut;
         private SineWaveProvider? sineProvider;
         private ShepardToneProvider2? shepardProvider;
@@ -154,7 +151,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             if (currentRun >= totalRuns)
             {
-                ShowResultsAndSave();
+                ShowResults();
             }
             else
             {
@@ -166,18 +163,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
         }
 
-        private void ShowResultsAndSave()
+        // Nur Anzeige / State, kein Speichern mehr hier
+        private void ShowResults()
         {
-            var date = DateTime.Now.ToString("yyMMdd", CultureInfo.InvariantCulture);
-            var arrowStr = arrowEnabled ? "ja" : "nein";
-            var fileName = $"{date}_{userName}_{selectedToneType?.Id}_Hilfspfeil_{arrowStr}.csv";
-            var csvLines = RunResults.Select(r =>
-                $"{r.Name};{selectedToneType?.Id};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
-            var csv = string.Join(Environment.NewLine, csvLines);
-            var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
-            File.WriteAllText(path, csv);
-
-            // Zeige verschiebbaren Dialog statt Popup
             IsRunsCompletedVisible = true;
         }
 
@@ -270,7 +258,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         _previousDistanceMeters,
                         MovementEpsilonMeters);
                     break;
-
                 case "sinus_linear":
                     lastFrequency = AudioUpdateHelper.HandleSinusLinear(
                         sineProvider!,
@@ -279,7 +266,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         distanceMeters,
                         lastFrequency);
                     break;
-
                 case "sinus_log":
                     lastFrequency = AudioUpdateHelper.HandleSinusLog(
                         sineProvider!,
@@ -288,7 +274,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         distanceMeters,
                         lastFrequency);
                     break;
-
                 case "tonleiter_diskret":
                     lastFrequency = AudioUpdateHelper.HandleTonleiterDiskret(
                         sineProvider!,
@@ -297,7 +282,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         distanceMeters,
                         lastFrequency);
                     break;
-
                 default:
                     _previousDistanceMeters = AudioUpdateHelper.HandleDefault(sineProvider, shepardProvider);
                     break;
@@ -307,7 +291,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         void OnContinueRunsCompleted()
         {
             IsRunsCompletedVisible = false;
-            // Weiterleitungs-/Folgelogik hier
         }
 
         void OnAllRunsFinished()

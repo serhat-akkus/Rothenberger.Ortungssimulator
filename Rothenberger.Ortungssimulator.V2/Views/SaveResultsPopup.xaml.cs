@@ -1,6 +1,7 @@
 ﻿using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.ApplicationModel.DataTransfer;
 using Microsoft.Maui.Devices;
+using Microsoft.Maui.Controls;
 
 namespace Rothenberger.Ortungssimulator.V2.Views
 {
@@ -19,9 +20,17 @@ namespace Rothenberger.Ortungssimulator.V2.Views
                 await Clipboard.Default.SetTextAsync(_path);
             };
 
-            ContinueButton.Clicked += (_, __) =>
+            // "Weiter" soll zur Startseite navigieren
+            ContinueButton.Clicked += async (_, __) =>
             {
-                CloseAsync();
+                // Popup sauber schließen
+                await CloseAsync();
+
+                // Zur Startseite zurück (Root der Navigation)
+                if (Shell.Current != null)
+                {
+                    await Shell.Current.Navigation.PopToRootAsync();
+                }
             };
 
             AdjustSizeForPath();
@@ -29,21 +38,17 @@ namespace Rothenberger.Ortungssimulator.V2.Views
 
         private void AdjustSizeForPath()
         {
-            // Verfügbare Bildschirmbreite in Geräteeinheiten
             var displayInfo = DeviceDisplay.MainDisplayInfo;
-            var maxScreenWidth = displayInfo.Width / displayInfo.Density - 40; // etwas Rand
+            var maxScreenWidth = displayInfo.Width / displayInfo.Density - 40;
 
-            // Label messen (unbegrenzt)
             PathLabel.Measure(double.PositiveInfinity, double.PositiveInfinity);
-            var desiredWidth = PathLabel.DesiredSize.Width + 32; // + Padding
+            var desiredWidth = PathLabel.DesiredSize.Width + 32;
 
-            // Grenzen anwenden
             if (desiredWidth < 400) desiredWidth = 400;
             if (desiredWidth > maxScreenWidth) desiredWidth = maxScreenWidth;
-            if (desiredWidth > 800) desiredWidth = 800; // MaxWidthRequest greifen lassen
+            if (desiredWidth > 800) desiredWidth = 800;
 
             WidthRequest = desiredWidth;
-            // Höhe wird durch ScrollView begrenzt, keine explizite HeightRequest nötig
         }
     }
 }
