@@ -1,22 +1,36 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <toolkit:Popup xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
                xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
                xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
                x:Class="Rothenberger.Ortungssimulator.V2.Views.SaveResultsPopup"
-               WidthRequest="400"
-               HeightRequest="250">
-    <VerticalStackLayout Padding="16" Spacing="12">
+               Padding="0">
+    <Grid Padding="16" RowSpacing="12"
+          RowDefinitions="Auto,*,Auto,Auto"
+          MinimumWidthRequest="400"
+          MaximumWidthRequest="800">
         <Label Text="Datei gespeichert"
                FontAttributes="Bold"
-               FontSize="18" />
-        <Label x:Name="PathLabel"
-               LineBreakMode="WordWrap"
-               FontSize="14" />
+               FontSize="18"
+               Grid.Row="0" />
+
+        <ScrollView Grid.Row="1"
+                    MaximumHeightRequest="220"
+                    HorizontalScrollBarVisibility="Never"
+                    VerticalScrollBarVisibility="Always">
+            <Label x:Name="PathLabel"
+                   FontSize="14"
+                   LineBreakMode="CharacterWrap" />
+        </ScrollView>
+
         <Label Text="Pfad in Zwischenablage kopieren?"
-               FontSize="14" />
-        <HorizontalStackLayout Spacing="10">
+               FontSize="14"
+               Grid.Row="2" />
+
+        <HorizontalStackLayout Grid.Row="3"
+                               Spacing="10"
+                               HorizontalOptions="End">
             <Button Text="Kopieren" x:Name="CopyButton" />
             <Button Text="Weiter" x:Name="ContinueButton" />
         </HorizontalStackLayout>
-    </VerticalStackLayout>
+    </Grid>
 </toolkit:Popup>
