@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Text.Json;
 using Rothenberger.Ortungssimulator.V2.Models;
 using Rothenberger.Ortungssimulator.V2.Views;
+using System.Linq;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -34,6 +35,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ToneTypes.Clear();
             foreach (var type in types)
                 ToneTypes.Add(type);
+
+            // Shepard vorauswählen
+            SelectedToneType = ToneTypes.FirstOrDefault(t => t.Id == "shepard");
         }
 
         private async void OnStart()
