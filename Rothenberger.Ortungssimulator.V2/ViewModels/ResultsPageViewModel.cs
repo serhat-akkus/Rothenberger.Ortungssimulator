@@ -34,9 +34,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private async void SaveAndContinue()
         {
-            var date = DateTime.Now.ToString("yyMMdd", CultureInfo.InvariantCulture);
+            var now = DateTime.Now;
+            var date = now.ToString("yyMMdd", CultureInfo.InvariantCulture);
+            var time = now.ToString("HHmmss", CultureInfo.InvariantCulture);
             var arrowStr = ArrowEnabled ? "ja" : "nein";
-            var fileName = $"{date}_{UserName}_{ToneType}_Hilfspfeil_{arrowStr}.csv";
+            var fileName = $"{date}_{time}_{UserName}_{ToneType}_Hilfspfeil_{arrowStr}.csv";
             var csvLines = RunResults.Select(r =>
                 $"{r.Name};{r.ToneType};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
             var csv = string.Join(Environment.NewLine, csvLines);
