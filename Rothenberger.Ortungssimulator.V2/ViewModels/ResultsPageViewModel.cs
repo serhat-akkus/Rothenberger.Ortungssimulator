@@ -3,7 +3,10 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Rothenberger.Ortungssimulator.V2.Models;
-using Microsoft.Maui.ApplicationModel.DataTransfer;
+using Rothenberger.Ortungssimulator.V2.Views;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
+using CommunityToolkit.Maui.Core;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -43,15 +46,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var page = Application.Current?.MainPage;
             if (page != null)
             {
-                bool copy = await page.DisplayAlertAsync(
-                    "Datei gespeichert",
-                    $"Die Ergebnisse wurden gespeichert:\n{path}\n\nPfad in Zwischenablage kopieren?",
-                    "Kopieren", "Weiter");
-
-                if (copy)
-                    await Clipboard.Default.SetTextAsync(path);
-
-                await Shell.Current.Navigation.PopToRootAsync();
+                var popup = new SaveResultsPopup(path);
+                var result = await page.ShowPopupAsync(popup);
+                if (result is IPopupResult popupResult && !popupResult.WasDismissedByTappingOutsideOfPopup)
+                {
+                    await Shell.Current.Navigation.PopToRootAsync();
+                }
             }
         }
     }
