@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Rothenberger.Ortungssimulator.V2.Models;
 using System.Timers;
@@ -42,7 +42,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         // Audio: NAudio
         private IWavePlayer? waveOut;
         private SineWaveProvider? sineProvider;
-        private ShepardToneProvider? shepardProvider;
+        private ShepardToneProvider2? shepardProvider;
         private bool isAudioActive;
         private double? lastFrequency;
         private double? _previousDistanceMeters;
@@ -271,6 +271,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         sineProvider!,
                         selectedToneType,
                         normalized,
+                        distanceMeters,
                         lastFrequency);
                     break;
 
@@ -279,6 +280,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         sineProvider!,
                         selectedToneType,
                         normalized,
+                        distanceMeters,
                         lastFrequency);
                     break;
 

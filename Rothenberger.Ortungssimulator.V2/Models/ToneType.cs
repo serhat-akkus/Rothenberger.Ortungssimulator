@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Text.Json.Serialization;
 
 namespace Rothenberger.Ortungssimulator.V2.Models
@@ -9,16 +9,12 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public string Name { get; set; }
 
         // Sinus
-        [JsonPropertyName("min_frequency")]
         public double? MinFrequency { get; set; }
 
-        [JsonPropertyName("max_frequency")]
         public double? MaxFrequency { get; set; }
 
-        [JsonPropertyName("log_base")]
         public string? LogBase { get; set; }
 
-        [JsonPropertyName("frequencies")]
         public List<double>? Frequencies { get; set; }
 
         // Shepard Basis
@@ -50,7 +46,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         [JsonPropertyName("sigma")]
         public double? ShepardSigma { get; set; }
 
-        // Neue Lautst�rke-/Normalisierungsparameter
+        // Neue Lautstärke-/Normalisierungsparameter
         [JsonPropertyName("master_level")]
         public double? MasterLevel { get; set; }
 
