@@ -1,9 +1,10 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
     x:Class="Rothenberger.Ortungssimulator.V2.Views.TestPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:vm="clr-namespace:Rothenberger.Ortungssimulator.V2.ViewModels"
+    xmlns:views="clr-namespace:Rothenberger.Ortungssimulator.V2.Views"
     BackgroundColor="White"
     Padding="10">
 
@@ -70,5 +71,8 @@
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
+
+        <!-- RunsCompletedDialog: repositioniert über dem Canvas -->
+        <views:RunsCompletedDialog Grid.RowSpan="2" Grid.ColumnSpan="2" ZIndex="100" />
     </Grid>
 </ContentPage>

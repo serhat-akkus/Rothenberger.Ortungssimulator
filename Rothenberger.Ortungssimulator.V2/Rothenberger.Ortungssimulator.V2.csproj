@@ -72,6 +72,9 @@
 	  <MauiXaml Update="Views\ResultsPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="Views\RunsCompletedDialog.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="Views\RunsCompletedPopup.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

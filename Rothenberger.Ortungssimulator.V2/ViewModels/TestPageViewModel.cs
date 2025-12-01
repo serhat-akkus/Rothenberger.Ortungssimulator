@@ -27,6 +27,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private Point clickPointPosition;
         [ObservableProperty] private double arrowRotation = 0;
         [ObservableProperty] private Point currentMousePosition;
+        [ObservableProperty]
+        bool isRunsCompletedVisible;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -50,6 +52,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
+        public IAsyncRelayCommand ContinueRunsCompletedCommand { get; }
 
         public ToneType SelectedToneType { get; private set; }
 
@@ -60,6 +63,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             StartRunCommand = new RelayCommand(StartRun);
             CanvasClickedCommand = new RelayCommand<Point>(OnCanvasClicked);
+            ContinueRunsCompletedCommand = new AsyncRelayCommand(OnContinueRunsCompletedAsync);
         }
 
         public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow)
@@ -162,7 +166,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
         }
 
-        private async void ShowResultsAndSave()
+        private void ShowResultsAndSave()
         {
             var date = DateTime.Now.ToString("yyMMdd", CultureInfo.InvariantCulture);
             var arrowStr = arrowEnabled ? "ja" : "nein";
@@ -173,12 +177,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
 
-            var page = Application.Current?.MainPage;
-            if (page != null)
-            {
-                var confirm = new RunsCompletedPopup();
-                var result = await page.ShowPopupAsync(confirm);
-            }
+            // Zeige verschiebbaren Dialog statt Popup
+            IsRunsCompletedVisible = true;
+        }
+
+        private async Task OnContinueRunsCompletedAsync()
+        {
+            IsRunsCompletedVisible = false;
 
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
             var resultsPage = new ResultsPage { BindingContext = resultsPageVm };
@@ -297,6 +302,17 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                     _previousDistanceMeters = AudioUpdateHelper.HandleDefault(sineProvider, shepardProvider);
                     break;
             }
+        }
+
+        void OnContinueRunsCompleted()
+        {
+            IsRunsCompletedVisible = false;
+            // Weiterleitungs-/Folgelogik hier
+        }
+
+        void OnAllRunsFinished()
+        {
+            IsRunsCompletedVisible = true;
         }
     }
 }
