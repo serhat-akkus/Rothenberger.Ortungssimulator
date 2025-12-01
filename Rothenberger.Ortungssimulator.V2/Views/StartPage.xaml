@@ -26,6 +26,11 @@
                Text="{Binding TestRunCount}" />
         <Label Text="{Binding RunCountError}" TextColor="Red" FontSize="12" IsVisible="{Binding RunCountError, Converter={StaticResource StringNotEmptyConverter}}" />
 
+        <!-- Sondentiefe -->
+        <Label Text="Sondentiefe (m)" FontAttributes="Bold" />
+        <Slider Minimum="0" Maximum="3" Value="{Binding ProbeDepthMeters}" />
+        <Label Text="{Binding ProbeDepthMeters, StringFormat='Aktuelle Tiefe: {0:F1} m'}" FontSize="12" />
+
         <!-- Checkbox + Text sehr nah -->
         <HorizontalStackLayout Spacing="0">
             <CheckBox IsChecked="{Binding ShowArrow}" VerticalOptions="Center" />

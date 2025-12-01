@@ -4,7 +4,6 @@ using Rothenberger.Ortungssimulator.V2.Models;
 using System.Timers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using System.Globalization;
 using Rothenberger.Ortungssimulator.V2.Views;
 using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
@@ -27,6 +26,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private double arrowRotation = 0;
         [ObservableProperty] private Point currentMousePosition;
         [ObservableProperty] bool isRunsCompletedVisible;
+        [ObservableProperty] private double probeDepthMeters; // neue Tiefe (0–3 m)
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -41,7 +41,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private IWavePlayer? waveOut;
         private SineWaveProvider? sineProvider;
-        private ShepardToneProvider2? shepardProvider;
+        private IAdaptiveShepardProvider? shepardProvider;
         private bool isAudioActive;
         private double? lastFrequency;
         private double? _previousDistanceMeters;
@@ -63,14 +63,26 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ContinueRunsCompletedCommand = new AsyncRelayCommand(OnContinueRunsCompletedAsync);
         }
 
-        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow)
+        // Radius auf Oberfläche (effektiv, abhängig von Tiefe) in Metern
+        public double EffectiveProbeRadiusMeters => _canvas.EffectiveProbeRadiusMeters;
+
+        // Zugriff für Zeichnung (Pixel)
+        public double ProbeRadiusPixels => _canvas.ProbeRadiusPixels;
+
+        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, double probeDepthMeters)
         {
             userName = name;
             SelectedToneType = selectedToneType;
             this.selectedToneType = selectedToneType;
             totalRuns = runCount;
             arrowEnabled = arrow;
+            ProbeDepthMeters = probeDepthMeters;
+            _canvas.SetDepth(ProbeDepthMeters);
             startRunButtonText = $"Starte Test-Run {currentRun}";
+
+            // Initiale Aktualisierung der abhängigen Anzeige-Properties
+            OnPropertyChanged(nameof(EffectiveProbeRadiusMeters));
+            OnPropertyChanged(nameof(ProbeRadiusPixels));
         }
 
         private void StartRun()
@@ -244,9 +256,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 return;
 
             double distanceMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
-            var toneId = selectedToneType?.Id?.ToLowerInvariant();
-
             double normalized = _canvas.NormalizeDistance(distanceMeters);
+
+            var toneId = selectedToneType?.Id?.ToLowerInvariant();
 
             switch (toneId)
             {
@@ -296,6 +308,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         void OnAllRunsFinished()
         {
             IsRunsCompletedVisible = true;
+        }
+
+        // Optional: Methode um Tiefe während Lauf dynamisch zu ändern (falls später gewünscht)
+        public void UpdateProbeDepth(double newDepth)
+        {
+            ProbeDepthMeters = Math.Clamp(newDepth, 0.0, _canvas.MaxDepthMeters);
+            _canvas.SetDepth(ProbeDepthMeters);
+            OnPropertyChanged(nameof(EffectiveProbeRadiusMeters));
+            OnPropertyChanged(nameof(ProbeRadiusPixels));
+            if (!IsRunNotStarted)
+            {
+                UpdateAudioForMousePosition();
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
+ï»¿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using System.Collections.ObjectModel;
 using System.Text.Json;
@@ -17,6 +17,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private string userNameError = "";
         [ObservableProperty] private string toneTypeError = "";
         [ObservableProperty] private string runCountError = "";
+        [ObservableProperty] private double probeDepthMeters = 0.0; // 0â€“3 m
 
         public ObservableCollection<ToneType> ToneTypes { get; set; } = new();
 
@@ -36,7 +37,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             foreach (var type in types)
                 ToneTypes.Add(type);
 
-            // Shepard vorauswählen
             SelectedToneType = ToneTypes.FirstOrDefault(t => t.Id == "shepard");
         }
 
@@ -54,12 +54,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
             if (SelectedToneType == null)
             {
-                ToneTypeError = "Bitte Tontyp auswählen.";
+                ToneTypeError = "Bitte Tontyp auswÃ¤hlen.";
                 valid = false;
             }
             if (TestRunCount < 1)
             {
                 RunCountError = "Anzahl der Runs muss mindestens 1 sein.";
+                valid = false;
+            }
+            if (ProbeDepthMeters < 0.0 || ProbeDepthMeters > 3.0)
+            {
                 valid = false;
             }
 
@@ -69,7 +73,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var testPage = new TestPage();
             if (testPage.BindingContext is TestPageViewModel vm)
             {
-                vm.Initialize(UserName, SelectedToneType, TestRunCount, ShowArrow);
+                vm.Initialize(UserName, SelectedToneType, TestRunCount, ShowArrow, ProbeDepthMeters);
             }
             await Shell.Current.Navigation.PushAsync(testPage);
         }

@@ -1,4 +1,5 @@
-﻿using Rothenberger.Ortungssimulator.V2.Models;
+﻿using System;
+using Rothenberger.Ortungssimulator.V2.Models;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -8,7 +9,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private const float ConstantVolume = 0.6f; // konstante Lautstärke innerhalb des Radius
 
         public static double? HandleShepard(
-            ShepardToneProvider2 shepardProvider,
+            IAdaptiveShepardProvider shepardProvider,
             double distanceMeters,
             double normalized,
             double? previousDistanceMeters,
@@ -159,7 +160,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             return lastFrequency;
         }
 
-        public static double? HandleDefault(SineWaveProvider? sineProvider, ShepardToneProvider2? shepardProvider)
+        public static double? HandleDefault(SineWaveProvider? sineProvider, IAdaptiveShepardProvider? shepardProvider)
         {
             if (sineProvider != null)
             {

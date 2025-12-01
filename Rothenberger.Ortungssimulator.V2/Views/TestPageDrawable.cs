@@ -8,16 +8,19 @@ namespace Rothenberger.Ortungssimulator.V2.Views
         {
             private readonly TestPage _page;
             public TestPageDrawable(TestPage page) { _page = page; }
+
             public void Draw(ICanvas canvas, RectF dirtyRect)
             {
                 canvas.DrawCanvasBackground(dirtyRect);
 
                 var vm = _page._viewModel;
                 if (vm == null) return;
+
                 if (vm.IsProbeVisible)
                 {
-                    canvas.DrawProbeCircle(vm.ProbePosition);
+                    canvas.DrawProbeCircle(vm.ProbePosition, vm.ProbeRadiusPixels);
                 }
+
                 if (vm.IsClickPointVisible)
                 {
                     canvas.DrawClickMarker(vm.ClickPointPosition);

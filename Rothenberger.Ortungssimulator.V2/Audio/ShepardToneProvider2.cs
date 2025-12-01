@@ -14,16 +14,13 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly float _audibleMin;
         private readonly float _audibleMax;
 
-        // NEU: ortsgebundene Semitone-Steuerung
-        // semitonesPerMeter > 0: steigender Ton mit Distanz, < 0: fallender Ton
         private readonly float _semitonesPerMeter;
-        // Startversatz (0..1) innerhalb der Oktave
         private readonly float _octaveShiftFraction;
 
-        // LUT entfällt, wir berechnen direkt über die Formel
         private readonly float[] _phases;
 
         private float _currentDistance;
+        private float _depthMeters; // NEU: aktuelle Tiefe der Sondenmitte (m)
         private float _userGain = 1f;
 
         private bool _normalizationEnabled = true;
@@ -50,9 +47,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             bool normalizationEnabled = true,
             float audibleMin = 55f,
             float audibleMax = 1760f,
-            // NEU: Parameter für ortsgebundene Semitone-Rate und Startoffset
-            float semitonesPerMeter = 12f,          // 12 st/m => 1 Oktave pro Meter
-            float octaveShiftFraction = 0f)         // 0..1 Startversatz innerhalb der Oktave
+            float semitonesPerMeter = 12f,
+            float octaveShiftFraction = 0f)
         {
             _sampleRate = sampleRate;
             _baseFreq = Math.Max(20f, baseFreq);
@@ -73,6 +69,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _phases = new float[numComponents];
 
             _currentDistance = _radiusMeters;
+            _depthMeters = 0f; // Standard: Oberfläche
             _masterLevel = Math.Clamp(masterLevel, 0.01f, 4f);
             _normalizationEnabled = normalizationEnabled;
 
@@ -116,7 +113,18 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             lock (_lock)
             {
+                // Clamp an den Kugelradius; tatsächliche Nutzung erfolgt gegen r2D(z) im ComputeBaseFrequency
                 _currentDistance = Math.Clamp(distanceMeters, 0f, _radiusMeters);
+            }
+        }
+
+        // NEU: Tiefe der Sondenmitte setzen (0.._radiusMeters sinnvoll)
+        public void SetDepth(float depthMeters)
+        {
+            lock (_lock)
+            {
+                // Tiefe darf physikalisch nicht größer als Kugelradius sein, sonst r2D = 0
+                _depthMeters = Math.Clamp(depthMeters, 0f, _radiusMeters);
             }
         }
 
@@ -130,24 +138,40 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             lock (_lock)
             {
-                return ComputeBaseFrequency(_currentDistance);
+                return ComputeBaseFrequency(_currentDistance, _depthMeters);
             }
         }
 
-        // NEU: direkte semitone-basierte Abbildung mit Oktav-Wrap
-        private float ComputeBaseFrequency(float distanceMeters)
+        // Physikalisch korrekt mit Tiefe:
+        // r2D(z) = sqrt(R^2 - z^2), falls z >= R => r2D = 0
+        // normalized = clamp(distance / r2D, 0..1)
+        // ΔOktaven = (semitonesPerMeter/12) * normalized
+        // cyclePos = frac(ΔOktaven + Startversatz)
+        // f_base = baseFreq * 2^(cyclePos)
+        private float ComputeBaseFrequency(float distanceMeters, float depthMeters)
         {
-            // Nähe statt Distanz: bei Annäherung (distance ↓) steigt proximity ↑
-            float proximity = MathF.Max(0f, _radiusMeters - distanceMeters);
+            float R = _radiusMeters;
+            float z = depthMeters;
+            float r2dSq = R * R - z * z;
+            if (r2dSq <= 0f)
+            {
+                return _baseFreq;
+            }
 
-            // Δlog2(f_base) = (semitonesPerMeter/12) * proximity
-            float deltaOctaves = (_semitonesPerMeter / 12f) * proximity;
+            float r2d = MathF.Sqrt(r2dSq);
 
-            // Startoffset innerhalb der Oktave addieren und auf [0,1) falten
+            // Distanz normalisieren (0 am Zentrum, 1 am Rand)
+            float normalized = Math.Clamp(distanceMeters / r2d, 0f, 1f);
+
+            // Nähe: 1 am Zentrum, 0 am Rand
+            float proximityNormalized = 1f - normalized;
+
+            // Oktavverschiebung über Nähe (positives semitonesPerMeter => Ton steigt bei Annäherung)
+            float deltaOctaves = (_semitonesPerMeter / 12f) * proximityNormalized;
+
             float cyclePos = deltaOctaves + _octaveShiftFraction;
-            cyclePos -= MathF.Floor(cyclePos); // frac(cyclePos)
+            cyclePos = cyclePos - MathF.Floor(cyclePos); // in [0,1)
 
-            // Basisfrequenz innerhalb einer Oktave um baseFreq
             float fBase = _baseFreq * (float)Math.Pow(2.0, cyclePos);
             return Math.Clamp(fBase, 20f, 20000f);
         }
@@ -164,6 +188,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             float localGain;
             float localDistance;
+            float localDepth;
             bool localNormEnabled;
             float localMaster;
 
@@ -171,11 +196,12 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             {
                 localGain = _userGain;
                 localDistance = _currentDistance;
+                localDepth = _depthMeters;
                 localNormEnabled = _normalizationEnabled;
                 localMaster = _masterLevel;
             }
 
-            float baseFrequency = ComputeBaseFrequency(localDistance);
+            float baseFrequency = ComputeBaseFrequency(localDistance, localDepth);
 
             float peak = 0f;
             int numComponents = _phases.Length;
@@ -216,13 +242,9 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             {
                 float desiredGain = _targetPeak / peak;
                 if (desiredGain < _normGain)
-                {
                     _normGain = _normGain * (1f - _release) + desiredGain * _release;
-                }
                 else
-                {
                     _normGain = _normGain * (1f - _attack) + desiredGain * _attack;
-                }
             }
 
             float finalGain = localGain * localMaster * _normGain;
