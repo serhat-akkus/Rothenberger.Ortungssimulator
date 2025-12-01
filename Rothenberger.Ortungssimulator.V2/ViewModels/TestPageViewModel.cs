@@ -8,6 +8,8 @@ using System.Globalization;
 using Rothenberger.Ortungssimulator.V2.Views;
 using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
+using CommunityToolkit.Maui.Views;
+using CommunityToolkit.Maui.Extensions;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -174,9 +176,17 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var path = Path.Combine(FileSystem.AppDataDirectory, fileName);
             File.WriteAllText(path, csv);
 
+            // Bestätigungs-Popup (nur "Weiter")
+            var page = Application.Current?.MainPage;
+            if (page != null)
+            {
+                var confirm = new RunsCompletedPopup();
+                var result = await page.ShowPopupAsync(confirm);
+                // result true bei "Weiter"; danach zur Ergebnisseite
+            }
+
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
-            var resultsPage = new ResultsPage();
-            resultsPage.BindingContext = resultsPageVm;
+            var resultsPage = new ResultsPage { BindingContext = resultsPageVm };
             await Shell.Current.Navigation.PushAsync(resultsPage);
         }
 
