@@ -11,8 +11,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly float _sigma;
         private readonly float _radiusMeters;
         private readonly int _octaveHalfSpan;
-        private readonly float _audibleMin;
-        private readonly float _audibleMax;
 
         private readonly float _semitonesPerMeter;
         private readonly float _octaveShiftFraction;
@@ -45,20 +43,15 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             float sigma = 1.0f,
             float masterLevel = 0.7f,
             bool normalizationEnabled = true,
-            float audibleMin = 55f,
-            float audibleMax = 1760f,
             float semitonesPerMeter = 12f,
             float octaveShiftFraction = 0f)
         {
             _sampleRate = sampleRate;
-            _baseFreq = Math.Max(20f, baseFreq);
-            _centerFreq = Math.Clamp(centerFreq, 20f, 20000f);
+            _baseFreq = Math.Max(0.001f, baseFreq);
+            _centerFreq = Math.Max(0.001f, centerFreq);
             _sigma = Math.Max(0.05f, sigma);
             _radiusMeters = Math.Max(0.5f, radiusMeters);
             _octaveHalfSpan = Math.Max(1, octaveHalfSpan);
-
-            _audibleMin = Math.Clamp(audibleMin, 20f, 20000f);
-            _audibleMax = Math.Clamp(audibleMax, _audibleMin * 2f, 20000f);
 
             _semitonesPerMeter = semitonesPerMeter;
             _octaveShiftFraction = Math.Clamp(octaveShiftFraction, 0f, 1f);
@@ -143,11 +136,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         }
 
         // Physikalisch korrekt mit Tiefe:
-        // r2D(z) = sqrt(R^2 - z^2), falls z >= R => r2D = 0
-        // normalized = clamp(distance / r2D, 0..1)
-        // ΔOktaven = (semitonesPerMeter/12) * normalized
-        // cyclePos = frac(ΔOktaven + Startversatz)
-        // f_base = baseFreq * 2^(cyclePos)
         private float ComputeBaseFrequency(float distanceMeters, float depthMeters)
         {
             float R = _radiusMeters;
@@ -173,15 +161,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             cyclePos = cyclePos - MathF.Floor(cyclePos); // in [0,1)
 
             float fBase = _baseFreq * (float)Math.Pow(2.0, cyclePos);
-            return Math.Clamp(fBase, 20f, 20000f);
-        }
-
-        private float FoldToAudible(float f)
-        {
-            if (f <= 0f) return _audibleMin;
-            while (f < _audibleMin) f *= 2f;
-            while (f > _audibleMax) f /= 2f;
-            return f;
+            // Keine Clamps mehr auf hörbaren Bereich
+            return Math.Max(0.001f, fBase);
         }
 
         public int Read(float[] buffer, int offset, int count)
@@ -215,17 +196,19 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 {
                     float fComponent = baseFrequency * (float)Math.Pow(2.0, k);
 
-                    fComponent = FoldToAudible(fComponent);
-                    if (fComponent < 20f || fComponent > 20000f) continue;
-
+                    // Gewichtung um centerFreq mittels Gauß-Hüllkurve
                     float log2Ratio = (float)(Math.Log(fComponent / _centerFreq) / Math.Log(2.0));
                     float scaled = log2Ratio / _sigma;
                     float amp = (float)Math.Exp(-0.5f * scaled * scaled);
 
                     float phaseInc = 2f * MathF.PI * fComponent / _sampleRate;
                     _phases[idx] += phaseInc;
+
+                    // Phase im [0, 2π) halten, verhindert float-Overflow
                     if (_phases[idx] > MathF.PI * 2f)
                         _phases[idx] -= MathF.PI * 2f;
+                    else if (_phases[idx] < 0f)
+                        _phases[idx] += MathF.PI * 2f;
 
                     sample += amp * MathF.Sin(_phases[idx]);
                 }

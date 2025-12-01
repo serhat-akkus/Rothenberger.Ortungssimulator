@@ -13,8 +13,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 octaveHalfSpan: type.OctaveHalfSpan ?? 5,
                 masterLevel: (float)(type.MasterLevel ?? 0.7f),
                 normalizationEnabled: type.Normalize ?? true,
-                audibleMin: (float)(type.AudibleMin ?? 55f),
-                audibleMax: (float)(type.AudibleMax ?? 1760f),
                 semitonesPerMeter: (float)(type.SemitonesPerMeter ?? 12f),
                 octaveShiftFraction: (float)(type.OctaveShiftFraction ?? 0f)
             );
