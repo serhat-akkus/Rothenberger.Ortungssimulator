@@ -42,39 +42,5 @@
       146.832,
       130.813
     ]
-  },
-  {
-    "Id": "shepard",
-    "Name": "Shepard",
-    "fs": 44100,
-    "base_freq": 55,
-    "num_tones": 10,
-    "center_freq": 440,
-    "sigma": 1.0,
-    "radius_meters": 5.0,
-    "octave_span": 2.0,
-    "lut_resolution": 2048,
-    "master_level": 0.9,
-    "normalization_enabled": true,
-    "duration": 6
-  },
-  {
-    "Id": "shepard_default",
-    "Name": "Shepard (Default)",
-    "base_freq": 55.0,
-    "radius_meters": 5.0,
-    "duration": 5.0,
-    "fs": 44100,
-    "num_tones": 11,
-    "octave_span": 2.0,
-    "lut_resolution": 2048,
-    "center_freq": 440.0,
-    "sigma": 1.0,
-    "master_level": 0.7,
-    "normalization_enabled": true,
-    "min_frequency": 55.0,
-    "max_frequency": 1760.0,
-    "semitones_per_meter": 2.4,
-    "octave_shift_fraction": 0.0
   }
 ]

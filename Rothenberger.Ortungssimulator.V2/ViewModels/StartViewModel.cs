@@ -17,7 +17,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private string userNameError = "";
         [ObservableProperty] private string toneTypeError = "";
         [ObservableProperty] private string runCountError = "";
-        [ObservableProperty] private double probeDepthMeters = 0.0; // 0–3 m
+        [ObservableProperty] private double probeDepthMeters = 0.0;
 
         public ObservableCollection<ToneType> ToneTypes { get; set; } = new();
 
@@ -37,7 +37,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             foreach (var type in types)
                 ToneTypes.Add(type);
 
-            SelectedToneType = ToneTypes.FirstOrDefault(t => t.Id == "shepard");
+            SelectedToneType = ToneTypes.FirstOrDefault(); // erste verfügbare (kein Shepard mehr)
         }
 
         private async void OnStart()

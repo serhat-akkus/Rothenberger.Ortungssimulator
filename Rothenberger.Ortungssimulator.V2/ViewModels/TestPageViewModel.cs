@@ -26,7 +26,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private double arrowRotation = 0;
         [ObservableProperty] private Point currentMousePosition;
         [ObservableProperty] bool isRunsCompletedVisible;
-        [ObservableProperty] private double probeDepthMeters; // neue Tiefe (0–3 m)
+        [ObservableProperty] private double probeDepthMeters;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -40,11 +40,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private IWavePlayer? waveOut;
         private SineWaveProvider? sineProvider;
-        private IAdaptiveShepardProvider? shepardProvider;
         private bool isAudioActive;
         private double? lastFrequency;
-        private double? _previousDistanceMeters;
-        private const double MovementEpsilonMeters = 0.01;
 
         private IDispatcherTimer? _uiTimer;
 
@@ -64,10 +61,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ContinueRunsCompletedCommand = new AsyncRelayCommand(OnContinueRunsCompletedAsync);
         }
 
-        // Radius auf Oberfläche (effektiv, abhängig von Tiefe) in Metern
         public double EffectiveProbeRadiusMeters => _canvas.EffectiveProbeRadiusMeters;
-
-        // Zugriff für Zeichnung (Pixel)
         public double ProbeRadiusPixels => _canvas.ProbeRadiusPixels;
 
         public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, double probeDepthMeters)
@@ -80,8 +74,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ProbeDepthMeters = probeDepthMeters;
             _canvas.SetDepth(ProbeDepthMeters);
             startRunButtonText = $"Starte Test-Run {currentRun}";
-
-            // Initiale Aktualisierung der abhängigen Anzeige-Properties
             OnPropertyChanged(nameof(EffectiveProbeRadiusMeters));
             OnPropertyChanged(nameof(ProbeRadiusPixels));
         }
@@ -99,16 +91,14 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
-            // System.Timers.Timer entfernen und MAUI-DispatcherTimer verwenden
             _uiTimer = Application.Current?.Dispatcher.CreateTimer();
             if (_uiTimer != null)
             {
                 runStartTime = DateTime.Now;
-                _uiTimer.Interval = TimeSpan.FromSeconds(1); // jede Sekunde
+                _uiTimer.Interval = TimeSpan.FromSeconds(1);
                 _uiTimer.Tick += (_, _) =>
                 {
                     var elapsed = DateTime.Now - runStartTime;
-                    // Format: mm:ss (Sekunden-genau)
                     TimerText = elapsed.ToString(@"mm\:ss");
                 };
                 _uiTimer.Start();
@@ -135,10 +125,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             UpdateAudioForMousePosition();
         }
 
-        private void StopArrowTimer()
-        {
-            _arrowHelper.Stop();
-        }
+        private void StopArrowTimer() => _arrowHelper.Stop();
 
         public void OnCanvasClicked(Point mousePosition)
         {
@@ -146,7 +133,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             _uiTimer?.Stop();
             _uiTimer = null;
-
             StopArrowTimer();
             StopAudio();
 
@@ -182,16 +168,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
         }
 
-        // Nur Anzeige / State, kein Speichern mehr hier
-        private void ShowResults()
-        {
-            IsRunsCompletedVisible = true;
-        }
+        private void ShowResults() => IsRunsCompletedVisible = true;
 
         private async Task OnContinueRunsCompletedAsync()
         {
             IsRunsCompletedVisible = false;
-
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Id, arrowEnabled);
             var resultsPage = new ResultsPage { BindingContext = resultsPageVm };
             await Shell.Current.Navigation.PushAsync(resultsPage);
@@ -207,7 +188,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public void UpdateCurrentMousePosition(Point mousePosition)
         {
             CurrentMousePosition = _canvas.ClampToCanvas(mousePosition);
-
             if (!IsRunNotStarted)
             {
                 UpdateAudioForMousePosition();
@@ -218,65 +198,35 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             StopAudio();
 
-            waveOut = new WaveOutEvent
-            {
-                DesiredLatency = 100
-            };
-
-            var toneId = selectedToneType?.Id?.ToLowerInvariant();
-            if (toneId == "shepard")
-            {
-                shepardProvider = ShepardToneFactory.CreateFromToneType(selectedToneType);
-                shepardProvider.SetGain(0f);
-                waveOut.Init(shepardProvider);
-            }
-            else
-            {
-                shepardProvider = null;
-                sineProvider = new SineWaveProvider(sampleRate: 44100, frequency: 440.0, initialVolume: 0.0f);
-                waveOut.Init(sineProvider);
-            }
-
+            waveOut = new WaveOutEvent { DesiredLatency = 100 };
+            sineProvider = new SineWaveProvider(sampleRate: 44100, frequency: 440.0, initialVolume: 0.0f);
+            waveOut.Init(sineProvider);
             waveOut.Play();
-            _previousDistanceMeters = null;
         }
 
         private void StopAudio()
         {
             isAudioActive = false;
-
             if (waveOut != null)
             {
                 try { waveOut.Stop(); } catch { }
                 waveOut.Dispose();
                 waveOut = null;
             }
-
             sineProvider?.Dispose();
             sineProvider = null;
-            shepardProvider = null;
         }
 
         private void UpdateAudioForMousePosition()
         {
-            if (!isAudioActive)
-                return;
+            if (!isAudioActive) return;
 
             double distanceMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
             double normalized = _canvas.NormalizeDistance(distanceMeters);
-
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
 
             switch (toneId)
             {
-                case "shepard":
-                    _previousDistanceMeters = AudioUpdateHelper.HandleShepard(
-                        shepardProvider!,
-                        distanceMeters,
-                        normalized,
-                        _previousDistanceMeters,
-                        MovementEpsilonMeters);
-                    break;
                 case "sinus_linear":
                     lastFrequency = AudioUpdateHelper.HandleSinusLinear(
                         sineProvider!,
@@ -302,22 +252,14 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         lastFrequency);
                     break;
                 default:
-                    _previousDistanceMeters = AudioUpdateHelper.HandleDefault(sineProvider, shepardProvider);
+                    lastFrequency = AudioUpdateHelper.HandleDefault(sineProvider);
                     break;
             }
         }
 
-        void OnContinueRunsCompleted()
-        {
-            IsRunsCompletedVisible = false;
-        }
+        void OnContinueRunsCompleted() => IsRunsCompletedVisible = false;
+        void OnAllRunsFinished() => IsRunsCompletedVisible = true;
 
-        void OnAllRunsFinished()
-        {
-            IsRunsCompletedVisible = true;
-        }
-
-        // Optional: Methode um Tiefe während Lauf dynamisch zu ändern (falls später gewünscht)
         public void UpdateProbeDepth(double newDepth)
         {
             ProbeDepthMeters = Math.Clamp(newDepth, 0.0, _canvas.MaxDepthMeters);
