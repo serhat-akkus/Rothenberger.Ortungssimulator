@@ -10,6 +10,5 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         void EnableNormalization(bool enabled);
         void SetDistance(float distanceMeters);
         void SetPosition(float xMeters, float yMeters);
-        float GetCurrentBaseFrequency();
     }
 }

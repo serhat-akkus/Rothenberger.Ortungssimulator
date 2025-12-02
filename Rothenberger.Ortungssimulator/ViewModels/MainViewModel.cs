@@ -1,4 +1,4 @@
-using System;
+ï»¿using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
@@ -19,7 +19,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
     {
         SinusLinear,
         SinusLogarithmic,
-        SinusExponential, // NEU
+        SinusExponential,
         Shepard
     }
 
@@ -46,8 +46,8 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         private const double ProbeRadiusMeter = 5.0;
         private const int ProbeRadiusPx = (int)(ProbeRadiusMeter / MeterPerPixel);
 
-        private Random _random = new Random();
-        private DispatcherTimer _timer;
+        private readonly Random _random = new();
+        private readonly DispatcherTimer _timer;
         private TimeSpan _elapsed;
         private bool _timerRunning;
         private int _clickCount;
@@ -60,12 +60,10 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         private double _clickedX;
         private double _clickedY;
 
-        // Audio
         private WaveOutEvent _waveOut;
         private ISoundProvider _soundProvider;
         private bool _soundActive;
 
-        // Sinus-Parameter
         private float _sinusFrequency = 440f;
         public float SinusFrequency
         {
@@ -96,7 +94,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             }
         }
 
-        // Shepard-Parameter (extended)
         private float _shepardBaseFrequency = 440f;
         public float ShepardBaseFrequency
         {
@@ -118,14 +115,14 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             set { if (_shepardAmplitude != value) { _shepardAmplitude = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
         }
 
-        private float _shepardFrequencyRange = 440f; // Default: one octave
+        private float _shepardFrequencyRange = 440f;
         public float ShepardFrequencyRange
         {
             get => _shepardFrequencyRange;
             set { if (_shepardFrequencyRange != value) { _shepardFrequencyRange = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
         }
 
-        private float _shepardEnvelopeWidth = 2.0f; // Default: 2.0
+        private float _shepardEnvelopeWidth = 2.0f;
         public float ShepardEnvelopeWidth
         {
             get => _shepardEnvelopeWidth;
@@ -139,15 +136,15 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             set { if (_shepardSweepMode != value) { _shepardSweepMode = value; OnPropertyChanged(); UpdateSoundProviderParameters(); } }
         }
 
-        public ObservableCollection<ToneType> ToneTypes { get; } = new ObservableCollection<ToneType>
+        public ObservableCollection<ToneType> ToneTypes { get; } = new()
         {
             ToneType.Shepard,
             ToneType.SinusLinear,
             ToneType.SinusLogarithmic,
-            ToneType.SinusExponential // NEU
+            ToneType.SinusExponential
         };
 
-        public ObservableCollection<SweepMode> SweepModes { get; } = new ObservableCollection<SweepMode>
+        public ObservableCollection<SweepMode> SweepModes { get; } = new()
         {
             SweepMode.Linear,
             SweepMode.Logarithmic,
@@ -169,19 +166,28 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             }
         }
 
-        public ObservableCollection<MeasurementResult> Results { get; } = new ObservableCollection<MeasurementResult>();
+        public ObservableCollection<MeasurementResult> Results { get; } = new();
+
+        // Formatierte Zeit (Sekunden mit zwei Nachkommastellen)
+        public string ElapsedFormatted => _elapsed.TotalSeconds.ToString("F2");
+
+        public TimeSpan Elapsed
+        {
+            get => _elapsed;
+            set
+            {
+                _elapsed = value;
+                OnPropertyChanged();
+                OnPropertyChanged(nameof(ElapsedFormatted));
+            }
+        }
 
         public MainViewModel()
         {
             CanvasClickCommand = new RelayCommand(OnCanvasClick);
             _timer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
-            _timer.Tick += (s, e) =>
-            {
-                Elapsed = Elapsed.Add(_timer.Interval);
-            };
-
+            _timer.Tick += (_, _) => Elapsed = _elapsed.Add(_timer.Interval);
             InitSoundProvider();
-
             ResetSimulator();
         }
 
@@ -194,7 +200,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             {
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
-                case ToneType.SinusExponential: // NEU
+                case ToneType.SinusExponential:
                     _soundProvider = new SineWaveProvider32();
                     _soundProvider.SetWaveFormat(44100, 1);
                     _soundProvider.Frequency = SinusFrequency;
@@ -211,6 +217,7 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                     _soundProvider.Amplitude = ShepardAmplitude;
                     break;
             }
+
             _waveOut = new WaveOutEvent();
             _waveOut.Init(_soundProvider);
         }
@@ -218,97 +225,42 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         private void UpdateSoundProviderParameters()
         {
             if (_soundProvider == null) return;
+
             switch (SelectedToneType)
             {
                 case ToneType.SinusLinear:
                 case ToneType.SinusLogarithmic:
-                case ToneType.SinusExponential: // NEU
+                case ToneType.SinusExponential:
                     _soundProvider.Frequency = SinusFrequency;
-                    // Amplitude NICHT setzen!
                     break;
                 case ToneType.Shepard:
                     if (_soundProvider is ShepardToneProvider32 shepard)
                     {
                         shepard.Frequency = ShepardBaseFrequency;
-                        // Amplitude NICHT setzen!
                         shepard.NumTones = ShepardNumTones;
                         shepard.EnvelopeWidth = ShepardEnvelopeWidth;
                     }
                     break;
             }
+
             UpdateSoundIfActive();
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
         public ICommand CanvasClickCommand { get; }
 
-        public double ProbeX
-        {
-            get => _probeX;
-            set { _probeX = value; OnPropertyChanged(); }
-        }
-
-        public double ProbeY
-        {
-            get => _probeY;
-            set { _probeY = value; OnPropertyChanged(); }
-        }
-
-        public bool ProbeVisible
-        {
-            get => _probeVisible;
-            set { _probeVisible = value; OnPropertyChanged(); }
-        }
-
-        public double MouseX
-        {
-            get => _mouseX;
-            set { _mouseX = value; OnPropertyChanged(); }
-        }
-
-        public double MouseY
-        {
-            get => _mouseY;
-            set { _mouseY = value; OnPropertyChanged(); }
-        }
-
-        public TimeSpan Elapsed
-        {
-            get => _elapsed;
-            set { _elapsed = value; OnPropertyChanged(); }
-        }
-
-        public bool TimerRunning
-        {
-            get => _timerRunning;
-            set { _timerRunning = value; OnPropertyChanged(); }
-        }
-
-        public bool ShowScale
-        {
-            get => _showScale;
-            set { _showScale = value; OnPropertyChanged(); }
-        }
-
-        public double ClickedX
-        {
-            get => _clickedX;
-            set { _clickedX = value; OnPropertyChanged(); }
-        }
-
-        public double ClickedY
-        {
-            get => _clickedY;
-            set { _clickedY = value; OnPropertyChanged(); }
-        }
+        public double ProbeX { get => _probeX; set { _probeX = value; OnPropertyChanged(); } }
+        public double ProbeY { get => _probeY; set { _probeY = value; OnPropertyChanged(); } }
+        public bool ProbeVisible { get => _probeVisible; set { _probeVisible = value; OnPropertyChanged(); } }
+        public double MouseX { get => _mouseX; set { _mouseX = value; OnPropertyChanged(); } }
+        public double MouseY { get => _mouseY; set { _mouseY = value; OnPropertyChanged(); } }
+        public bool TimerRunning { get => _timerRunning; set { _timerRunning = value; OnPropertyChanged(); } }
+        public bool ShowScale { get => _showScale; set { _showScale = value; OnPropertyChanged(); } }
+        public double ClickedX { get => _clickedX; set { _clickedX = value; OnPropertyChanged(); } }
+        public double ClickedY { get => _clickedY; set { _clickedY = value; OnPropertyChanged(); } }
 
         private bool _showDistanceAfterTimer;
-        public bool ShowDistanceAfterTimer
-        {
-            get => _showDistanceAfterTimer;
-            set { _showDistanceAfterTimer = value; OnPropertyChanged(); }
-        }
+        public bool ShowDistanceAfterTimer { get => _showDistanceAfterTimer; set { _showDistanceAfterTimer = value; OnPropertyChanged(); } }
 
         public double DistanceToProbeMeter
         {
@@ -325,55 +277,54 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         {
             MouseX = x;
             MouseY = y;
-
             UpdateSoundIfActive();
         }
 
         private void UpdateSoundIfActive()
         {
-            if (_clickCount == 1)
-            {
-                double dx = (MouseX - ProbeX) * MeterPerPixel;
-                double dy = (MouseY - ProbeY) * MeterPerPixel;
-                double dist = Math.Sqrt(dx * dx + dy * dy);
+            if (_clickCount != 1) return;
 
-                if (dist <= ProbeRadiusMeter)
+            double dx = (MouseX - ProbeX) * MeterPerPixel;
+            double dy = (MouseY - ProbeY) * MeterPerPixel;
+            double dist = Math.Sqrt(dx * dx + dy * dy);
+
+            if (dist <= ProbeRadiusMeter)
+            {
+                float amplitude;
+                switch (SelectedToneType)
                 {
-                    float amplitude;
-                    switch (SelectedToneType)
-                    {
-                        case ToneType.SinusLinear:
-                            amplitude = SinusAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
-                            break;
-                        case ToneType.SinusLogarithmic:
-                            amplitude = SinusAmplitude * (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter));
-                            amplitude = Math.Max(0f, amplitude);
-                            break;
-                        case ToneType.SinusExponential: // NEU
-                            // Exponentiell ansteigend beim Annähern, logarithmisch abfallend beim Entfernen
-                            double norm = 1.0 - (dist / ProbeRadiusMeter);
-                            amplitude = SinusAmplitude * (float)((Math.Exp(4 * norm) - 1) / (Math.Exp(4) - 1));
-                            amplitude = Math.Max(0f, Math.Min(SinusAmplitude, amplitude));
-                            break;
-                        case ToneType.Shepard:
-                            amplitude = ShepardAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
-                            break;
-                        default:
-                            amplitude = 0f;
-                            break;
-                    }
-                    if (!_soundActive)
-                    {
-                        _waveOut.Play();
-                        _soundActive = true;
-                    }
-                    _soundProvider.Amplitude = amplitude;
-                    _soundProvider.Frequency = GetFrequencyForToneType(dist);
+                    case ToneType.SinusLinear:
+                        amplitude = SinusAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
+                        break;
+                    case ToneType.SinusLogarithmic:
+                        amplitude = SinusAmplitude * (float)(1.0 - Math.Log10(1 + 9 * dist / ProbeRadiusMeter));
+                        amplitude = Math.Max(0f, amplitude);
+                        break;
+                    case ToneType.SinusExponential:
+                        double norm = 1.0 - (dist / ProbeRadiusMeter);
+                        amplitude = SinusAmplitude * (float)((Math.Exp(4 * norm) - 1) / (Math.Exp(4) - 1));
+                        amplitude = Math.Max(0f, Math.Min(SinusAmplitude, amplitude));
+                        break;
+                    case ToneType.Shepard:
+                        amplitude = ShepardAmplitude * (float)(1.0 - (dist / ProbeRadiusMeter));
+                        break;
+                    default:
+                        amplitude = 0f;
+                        break;
                 }
-                else
+
+                if (!_soundActive)
                 {
-                    _soundProvider.Amplitude = 0f;
+                    _waveOut.Play();
+                    _soundActive = true;
                 }
+
+                _soundProvider.Amplitude = amplitude;
+                _soundProvider.Frequency = GetFrequencyForToneType(dist);
+            }
+            else
+            {
+                _soundProvider.Amplitude = 0f;
             }
         }
 
@@ -383,26 +334,14 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             {
                 case ToneType.Shepard:
                     double norm = 1.0 - (dist / ProbeRadiusMeter);
-                    double shepardFreq;
-                    switch (ShepardSweepMode)
+                    double shepardFreq = ShepardSweepMode switch
                     {
-                        case SweepMode.Linear:
-                            shepardFreq = ShepardBaseFrequency + (ShepardFrequencyRange * norm);
-                            break;
-                        case SweepMode.Logarithmic:
-                            shepardFreq = ShepardBaseFrequency * Math.Pow(2, norm * Math.Log(ShepardFrequencyRange / ShepardBaseFrequency, 2));
-                            break;
-                        case SweepMode.Cyclic:
-                            shepardFreq = ShepardBaseFrequency * Math.Pow(2, (norm % 1.0));
-                            break;
-                        default:
-                            shepardFreq = ShepardBaseFrequency + (ShepardFrequencyRange * norm);
-                            break;
-                    }
+                        SweepMode.Linear => ShepardBaseFrequency + (ShepardFrequencyRange * norm),
+                        SweepMode.Logarithmic => ShepardBaseFrequency * Math.Pow(2, norm * Math.Log(ShepardFrequencyRange / ShepardBaseFrequency, 2)),
+                        SweepMode.Cyclic => ShepardBaseFrequency * Math.Pow(2, (norm % 1.0)),
+                        _ => ShepardBaseFrequency + (ShepardFrequencyRange * norm)
+                    };
                     return (float)shepardFreq;
-                case ToneType.SinusLinear:
-                case ToneType.SinusLogarithmic:
-                case ToneType.SinusExponential: // NEU
                 default:
                     return SinusFrequency;
             }
@@ -410,57 +349,55 @@ namespace Rothenberger.Ortungssimulator.ViewModels
 
         private void OnCanvasClick(object parameter)
         {
-            if (parameter is Tuple<double, double> pos)
+            if (parameter is not Tuple<double, double> pos) return;
+
+            double x = pos.Item1;
+            double y = pos.Item2;
+
+            if (_clickCount == 0)
             {
-                double x = pos.Item1;
-                double y = pos.Item2;
+                Elapsed = TimeSpan.Zero;
+                TimerRunning = true;
+                _timer.Start();
+                _clickCount = 1;
+                ShowDistanceAfterTimer = false;
+            }
+            else if (_clickCount == 1)
+            {
+                ClickedX = x;
+                ClickedY = y;
+                ProbeVisible = true;
+                ShowScale = true;
+                TimerRunning = false;
+                _timer.Stop();
+                _clickCount = 2;
+                OnPropertyChanged(nameof(DistanceToProbeMeter));
 
-                if (_clickCount == 0)
+                _soundProvider.Amplitude = 0f;
+                _waveOut.Stop();
+                _soundActive = false;
+
+                ShowDistanceAfterTimer = true;
+
+                Results.Add(new MeasurementResult
                 {
-                    Elapsed = TimeSpan.Zero;
-                    TimerRunning = true;
-                    _timer.Start();
-                    _clickCount = 1;
-                    ShowDistanceAfterTimer = false;
-                }
-                else if (_clickCount == 1)
-                {
-                    ClickedX = x;
-                    ClickedY = y;
-                    ProbeVisible = true;
-                    ShowScale = true;
-                    TimerRunning = false;
-                    _timer.Stop();
-                    _clickCount = 2;
-                    OnPropertyChanged(nameof(DistanceToProbeMeter));
-
-                    _soundProvider.Amplitude = 0f;
-                    _waveOut.Stop();
-                    _soundActive = false;
-
-                    ShowDistanceAfterTimer = true;
-
-                    // Ergebnis speichern
-                    Results.Add(new MeasurementResult
-                    {
-                        Time = Elapsed,
-                        Distance = DistanceToProbeMeter,
-                        Timestamp = DateTime.Now,
-                        ToneType = SelectedToneType.ToString(),
-                        SinusFrequency = SinusFrequency,
-                        SinusAmplitude = SinusAmplitude,
-                        ShepardBaseFrequency = ShepardBaseFrequency,
-                        ShepardFrequencyRange = ShepardFrequencyRange,
-                        ShepardNumTones = ShepardNumTones,
-                        ShepardAmplitude = ShepardAmplitude,
-                        ShepardEnvelopeWidth = ShepardEnvelopeWidth,
-                        ShepardSweepMode = ShepardSweepMode.ToString()
-                    });
-                }
-                else
-                {
-                    ResetSimulator();
-                }
+                    Time = Elapsed,
+                    Distance = DistanceToProbeMeter,
+                    Timestamp = DateTime.Now,
+                    ToneType = SelectedToneType.ToString(),
+                    SinusFrequency = SinusFrequency,
+                    SinusAmplitude = SinusAmplitude,
+                    ShepardBaseFrequency = ShepardBaseFrequency,
+                    ShepardFrequencyRange = ShepardFrequencyRange,
+                    ShepardNumTones = ShepardNumTones,
+                    ShepardAmplitude = ShepardAmplitude,
+                    ShepardEnvelopeWidth = ShepardEnvelopeWidth,
+                    ShepardSweepMode = ShepardSweepMode.ToString()
+                });
+            }
+            else
+            {
+                ResetSimulator();
             }
         }
 
@@ -472,14 +409,12 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             Elapsed = TimeSpan.Zero;
             _timer.Stop();
             _clickCount = 0;
-            // Random position for probe, ensure it's fully inside canvas
             ProbeX = _random.Next(ProbeRadiusPx, CanvasSizePx - ProbeRadiusPx);
             ProbeY = _random.Next(ProbeRadiusPx, CanvasSizePx - ProbeRadiusPx);
             ClickedX = 0;
             ClickedY = 0;
             OnPropertyChanged(nameof(DistanceToProbeMeter));
 
-            // Ton stoppen
             _soundProvider.Amplitude = 0f;
             _waveOut.Stop();
             _soundActive = false;
@@ -487,13 +422,10 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             ShowDistanceAfterTimer = false;
         }
 
-        protected void OnPropertyChanged([CallerMemberName] string name = null)
-        {
+        protected void OnPropertyChanged([CallerMemberName] string name = null) =>
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
-        }
     }
 
-    // Interface für SoundProvider
     public interface ISoundProvider : IWaveProvider
     {
         float Frequency { get; set; }
@@ -501,7 +433,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         void SetWaveFormat(int sampleRate, int channels);
     }
 
-    // Sinus linear
     public class SineWaveProvider32 : WaveProvider32, ISoundProvider
     {
         public float Frequency { get; set; }
@@ -521,7 +452,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         }
     }
 
-    // Sinus logarithmisch
     public class LogSineWaveProvider32 : WaveProvider32, ISoundProvider
     {
         public float Frequency { get; set; }
@@ -533,7 +463,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
             int sampleRate = WaveFormat.SampleRate;
             for (int n = 0; n < sampleCount; n++)
             {
-                // Logarithmischer Anstieg: Amplitude wird im ViewModel berechnet
                 buffer[n + offset] = (float)(Amplitude * Math.Sin(_phaseAngle));
                 _phaseAngle += 2 * (float)Math.PI * Frequency / sampleRate;
                 if (_phaseAngle > 2 * Math.PI) _phaseAngle -= 2 * (float)Math.PI;
@@ -542,7 +471,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         }
     }
 
-    // Shepard-Ton
     public class ShepardToneProvider32 : WaveProvider32, ISoundProvider
     {
         public float Frequency { get; set; }
@@ -559,7 +487,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
                 float value = 0f;
                 for (int i = 0; i < NumTones; i++)
                 {
-                    // Shepard-Ton: Überlagerung von Sinustönen im Oktavabstand mit abnehmender Amplitude
                     float freq = Frequency * (float)Math.Pow(2, i - NumTones / 2);
                     float amp = Amplitude * (float)Math.Exp(-0.5 * Math.Pow((i - NumTones / 2) / EnvelopeWidth, 2));
                     value += amp * (float)Math.Sin(_phaseAngle * freq / Frequency);
@@ -572,7 +499,6 @@ namespace Rothenberger.Ortungssimulator.ViewModels
         }
     }
 
-    // Simple RelayCommand implementation
     public class RelayCommand : ICommand
     {
         private readonly Action<object> _execute;

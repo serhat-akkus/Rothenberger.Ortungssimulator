@@ -1,6 +1,7 @@
 ﻿using NAudio.Wave;
 using System;
 using System.Diagnostics;
+using Rothenberger.Ortungssimulator.V2.Utils;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -139,33 +140,16 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
         public void SetPosition(float xMeters, float yMeters)
         {
-            float d = MathF.Sqrt(xMeters * xMeters + yMeters * yMeters);
+            float d = (float)DistanceHelper.Distance2D(xMeters, yMeters);
             SetDistance(d);
-        }
-
-        public float GetCurrentBaseFrequency()
-        {
-            lock (_lock)
-            {
-                return ComputeBaseFrequency(_currentDistance, _depthMeters);
-            }
         }
 
         private float ComputeBaseFrequency(float distanceMeters, float depthMeters)
         {
-            float R = _radiusMeters;
-            float z = depthMeters;
-            float r2dSq = R * R - z * z;
-            if (r2dSq <= 0f)
-            {
-                return _baseFreq;
-            }
+            // Effektiven 2D-Radius (abhängig von Tiefe) und Normalisierung zentral berechnen
+            var (_, proximityNormalized) = DistanceHelper.Normalize2DWithDepth(distanceMeters, _radiusMeters, depthMeters);
 
-            float r2d = MathF.Sqrt(r2dSq);
-            float normalized = Math.Clamp(distanceMeters / r2d, 0f, 1f);
-            float proximityNormalized = 1f - normalized;
-
-            float deltaOctaves = (_semitonesPerMeter / 12f) * proximityNormalized;
+            float deltaOctaves = (_semitonesPerMeter / 12f) * (float)proximityNormalized;
 
             float cyclePos = deltaOctaves + _octaveShiftFraction;
             cyclePos = cyclePos - MathF.Floor(cyclePos); // in [0,1)
@@ -240,8 +224,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     Debug.WriteLine($"[ShepardProbe] n={n}, raw={sample:F6}, dist={localDistance:F3}m, depth={localDepth:F3}m, fBase={baseFrequency:F3}Hz");
                 }
             }
-
-            // Dynamische Normalisierung entfernt: kein Update von _normGain
 
             // Konstanter finaler Gain nur über User/Master
             float finalGain = localGain * localMaster;

@@ -1,13 +1,13 @@
 ﻿using System.Collections.ObjectModel;
 using System.Windows.Input;
 using Rothenberger.Ortungssimulator.V2.Models;
-using System.Timers;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Rothenberger.Ortungssimulator.V2.Views;
 using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
 using System.IO;
+using Microsoft.Maui.Dispatching;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
@@ -32,7 +32,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private int currentRun = 1;
         private int totalRuns = 3;
-        private System.Timers.Timer timer;
         private DateTime runStartTime;
         private Point probeLogicalPosition;
         private bool arrowEnabled = false;
@@ -46,6 +45,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private double? lastFrequency;
         private double? _previousDistanceMeters;
         private const double MovementEpsilonMeters = 0.01;
+
+        private IDispatcherTimer? _uiTimer;
 
         public ICommand StartRunCommand { get; }
         public ICommand CanvasClickedCommand { get; }
@@ -98,10 +99,20 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
-            timer = new System.Timers.Timer(1000);
-            runStartTime = DateTime.Now;
-            timer.Elapsed += Timer_Elapsed;
-            timer.Start();
+            // System.Timers.Timer entfernen und MAUI-DispatcherTimer verwenden
+            _uiTimer = Application.Current?.Dispatcher.CreateTimer();
+            if (_uiTimer != null)
+            {
+                runStartTime = DateTime.Now;
+                _uiTimer.Interval = TimeSpan.FromSeconds(1); // jede Sekunde
+                _uiTimer.Tick += (_, _) =>
+                {
+                    var elapsed = DateTime.Now - runStartTime;
+                    // Format: mm:ss (Sekunden-genau)
+                    TimerText = elapsed.ToString(@"mm\:ss");
+                };
+                _uiTimer.Start();
+            }
 
             if (arrowEnabled)
             {
@@ -124,12 +135,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             UpdateAudioForMousePosition();
         }
 
-        private void Timer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            var elapsed = DateTime.Now - runStartTime;
-            TimerText = elapsed.ToString(@"mm\:ss");
-        }
-
         private void StopArrowTimer()
         {
             _arrowHelper.Stop();
@@ -138,9 +143,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public void OnCanvasClicked(Point mousePosition)
         {
             if (IsRunNotStarted) return;
-            timer?.Stop();
-            StopArrowTimer();
 
+            _uiTimer?.Stop();
+            _uiTimer = null;
+
+            StopArrowTimer();
             StopAudio();
 
             IsClickPointVisible = true;

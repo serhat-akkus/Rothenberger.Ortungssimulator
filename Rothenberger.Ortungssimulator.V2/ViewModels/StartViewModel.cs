@@ -10,7 +10,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public partial class StartViewModel : ObservableObject
     {
-        [ObservableProperty] private string userName = "Probant";
+        [ObservableProperty] private string userName = "Proband";
         [ObservableProperty] private ToneType selectedToneType;
         [ObservableProperty] private int testRunCount = 10;
         [ObservableProperty] private bool showArrow;
