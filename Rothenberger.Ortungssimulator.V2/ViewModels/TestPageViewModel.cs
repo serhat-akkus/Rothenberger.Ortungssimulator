@@ -28,6 +28,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] bool isRunsCompletedVisible;
         [ObservableProperty] private double probeDepthMeters;
 
+        // Neu: Für Anzeige über der Ergebnisliste
+        [ObservableProperty] private string userNameDisplay = "";
+        [ObservableProperty] private string toneTypeDisplay = "";
+
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
         private int currentRun = 1;
@@ -76,6 +80,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             startRunButtonText = $"Starte Test-Run {currentRun}";
             OnPropertyChanged(nameof(EffectiveProbeRadiusMeters));
             OnPropertyChanged(nameof(ProbeRadiusPixels));
+
+            // Neu: Werte für Anzeige setzen
+            UserNameDisplay = userName;
+            ToneTypeDisplay = selectedToneType?.Name ?? "";
         }
 
         private void StartRun()

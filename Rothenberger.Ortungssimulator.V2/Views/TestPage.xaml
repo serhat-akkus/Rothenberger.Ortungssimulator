@@ -8,7 +8,9 @@
     BackgroundColor="White"
     Padding="10">
 
-    <Grid RowDefinitions="Auto,*" ColumnDefinitions="1000,Auto">
+    <Grid RowDefinitions="Auto,*"
+          ColumnDefinitions="1000,Auto"
+          ColumnSpacing="12">
         <!-- Oberer Bereich: Tiefe + Radius darüber, darunter Timer + Distanz -->
         <StackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center" Margin="0,20,0,0" Spacing="6">
             <StackLayout Orientation="Horizontal" Spacing="24" HorizontalOptions="Center">
@@ -62,23 +64,85 @@
                 AbsoluteLayout.LayoutFlags="None" />
         </AbsoluteLayout>
 
-        <!-- Ergebnisliste -->
-        <CollectionView
-            Grid.Row="1"
-            Grid.Column="1"
-            ItemsSource="{Binding RunResults}" VerticalOptions="FillAndExpand">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <StackLayout Orientation="Horizontal">
-                        <Label Text="{Binding Name}" />
-                        <Label Text="{Binding ToneType}" Margin="10,0,0,0" />
-                        <Label Text="{Binding Timestamp}" Margin="10,0,0,0" />
-                        <Label Text="{Binding Time}" Margin="10,0,0,0" />
-                        <Label Text="{Binding Distance}" Margin="10,0,0,0" />
-                    </StackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
+        <!-- Ergebnisliste (Kopf mit Name/Ton-Typ EINMALIG, darunter Tabelle mit festen Spaltenbreiten) -->
+        <Grid Grid.Row="1" Grid.Column="1"
+              RowDefinitions="Auto,Auto,*"
+              ColumnDefinitions="Auto"
+              RowSpacing="6">
+
+            <!-- Tabellarische Anzeige von Name und Ton-Typ -->
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="90,180"
+                  RowDefinitions="Auto,Auto"
+                  Padding="0,0,0,0">
+                <Label Grid.Row="0" Grid.Column="0"
+                       Text="Name:"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Start"
+                       VerticalTextAlignment="Center" />
+                <Label Grid.Row="0" Grid.Column="1"
+                       Text="{Binding UserNameDisplay}"
+                       FontSize="16"
+                       HorizontalTextAlignment="Start"
+                       VerticalTextAlignment="Center" />
+                <Label Grid.Row="1" Grid.Column="0"
+                       Text="Ton-Typ:"
+                       FontSize="16"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Start"
+                       VerticalTextAlignment="Center" />
+                <Label Grid.Row="1" Grid.Column="1"
+                       Text="{Binding ToneTypeDisplay}"
+                       FontSize="16"
+                       HorizontalTextAlignment="Start"
+                       VerticalTextAlignment="Center" />
+            </Grid>
+
+            <!-- Tabellen-Header -->
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="160,60,80"
+                  BackgroundColor="{AppThemeBinding Light='#EEEEEE', Dark='#222222'}"
+                  Padding="10,8">
+                <Label Grid.Column="0" Text="Zeitstempel" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="Start" />
+                <Label Grid.Column="1" Text="Dauer" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                <Label Grid.Column="2" Text="Distanz (m)" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="End" />
+            </Grid>
+
+            <!-- Zeilen -->
+            <CollectionView Grid.Row="2"
+                            Margin="0,4,0,0"
+                            ItemsSource="{Binding RunResults}"
+                            SelectionMode="None"
+                            ItemSizingStrategy="MeasureAllItems">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="160,60,80"
+                              Padding="10,8">
+                            <Label Grid.Column="0"
+                                   Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Start"
+                                   LineBreakMode="TailTruncation" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Time, StringFormat='{0:mm\\:ss}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2"
+                                   Text="{Binding Distance, StringFormat='{0:F2}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="End" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </Grid>
 
         <views:RunsCompletedDialog Grid.RowSpan="2" Grid.ColumnSpan="2" ZIndex="100" />
     </Grid>
