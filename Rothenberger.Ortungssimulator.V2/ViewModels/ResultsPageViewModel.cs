@@ -12,11 +12,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public partial class ResultsPageViewModel : ObservableObject
     {
-        // Bestehende Collection
         public ObservableCollection<TestRunResult> RunResults { get; }
-        // Zusätzliche Property für XAML-Binding "Results"
-        public ObservableCollection<TestRunResult> Results => RunResults;
-
         public string UserName { get; }
         public string ToneType { get; }
         public bool ArrowEnabled { get; }
@@ -36,7 +32,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             SaveAndContinueCommand = new RelayCommand(SaveAndContinue);
         }
 
-        // Button-Implementierung bleibt unverändert
         private async void SaveAndContinue()
         {
             var now = DateTime.Now;
@@ -45,10 +40,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var arrowStr = ArrowEnabled ? "ja" : "nein";
             var fileName = $"{date}_{time}_{UserName}_{ToneType}_Hilfspfeil_{arrowStr}.csv";
 
+            // Header ergänzen
+            const string header = "Name;Ton-Typ;Zeitstempel;Dauer;Distanz(m);Hilfspfeil";
+
             var csvLines = RunResults.Select(r =>
                 $"{r.Name};{r.ToneType};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
 
-            var csv = string.Join(Environment.NewLine, csvLines);
+            var csv = header + Environment.NewLine + string.Join(Environment.NewLine, csvLines);
 
             string finalPath;
             try
