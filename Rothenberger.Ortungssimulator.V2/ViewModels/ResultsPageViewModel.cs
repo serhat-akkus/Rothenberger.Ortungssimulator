@@ -12,7 +12,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public partial class ResultsPageViewModel : ObservableObject
     {
+        // Bestehende Collection
         public ObservableCollection<TestRunResult> RunResults { get; }
+        // Zusätzliche Property für XAML-Binding "Results"
+        public ObservableCollection<TestRunResult> Results => RunResults;
+
         public string UserName { get; }
         public string ToneType { get; }
         public bool ArrowEnabled { get; }
@@ -32,6 +36,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             SaveAndContinueCommand = new RelayCommand(SaveAndContinue);
         }
 
+        // Button-Implementierung bleibt unverändert
         private async void SaveAndContinue()
         {
             var now = DateTime.Now;

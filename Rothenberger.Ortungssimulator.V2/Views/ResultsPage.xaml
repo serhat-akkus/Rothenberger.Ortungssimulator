@@ -1,25 +1,79 @@
-<?xml version="1.0" encoding="utf-8" ?>
+﻿<?xml version="1.0" encoding="utf-8" ?>
 <ContentPage
-    x:Class="Rothenberger.Ortungssimulator.V2.Views.ResultsPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    BackgroundColor="White">
+    xmlns:conv="clr-namespace:Rothenberger.Ortungssimulator.V2.Converters"
+    x:Class="Rothenberger.Ortungssimulator.V2.Views.ResultsPage"
+    x:Name="RootPage"
+    Title="Ergebnisse">
 
-    <StackLayout Padding="20">
-        <Label Text="Ergebnisse" FontSize="32" HorizontalOptions="Center"/>
-        <CollectionView ItemsSource="{Binding RunResults}">
-            <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <StackLayout Orientation="Horizontal">
-                        <Label Text="{Binding Name}" />
-                        <Label Text="{Binding ToneType}" Margin="10,0,0,0"/>
-                        <Label Text="{Binding Timestamp}" Margin="10,0,0,0"/>
-                        <Label Text="{Binding Time}" Margin="10,0,0,0"/>
-                        <Label Text="{Binding Distance}" Margin="10,0,0,0"/>
-                    </StackLayout>
-                </DataTemplate>
-            </CollectionView.ItemTemplate>
-        </CollectionView>
-        <Button Text="Speichern und fortfahren" Command="{Binding SaveAndContinueCommand}" Margin="0,20,0,0"/>
-    </StackLayout>
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <conv:HalfWidthConverter x:Key="HalfWidthConverter" />
+            <Style x:Key="HeaderTextStyle" TargetType="Label">
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="Padding" Value="8,4" />
+            </Style>
+            <Style x:Key="CellTextStyle" TargetType="Label">
+                <Setter Property="Padding" Value="8,4" />
+            </Style>
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- ScrollView, damit bei vielen Einträgen gescrollt werden kann -->
+    <ScrollView>
+        <!-- Zentrierter Container mit 50% Seitenbreite -->
+        <ContentView
+            HorizontalOptions="Center"
+            Padding="16"
+            WidthRequest="{Binding Source={x:Reference RootPage}, Path=Width, Converter={StaticResource HalfWidthConverter}}">
+
+            <VerticalStackLayout Spacing="12">
+
+                <!-- Tabellen-Header -->
+                <Grid ColumnDefinitions="2*,2*,2*,2*,2*,Auto"
+                      BackgroundColor="{AppThemeBinding Light='#EEEEEE', Dark='#222222'}"
+                      Padding="0,4">
+                    <Label Grid.Column="0" Text="Name" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="1" Text="Ton-Typ" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="2" Text="Zeitstempel" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="3" Text="Dauer" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="4" Text="Distanz (m)" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="5" Text="Pfeil" Style="{StaticResource HeaderTextStyle}" HorizontalTextAlignment="Center" />
+                </Grid>
+
+                <!-- Ergebnisliste als Tabelle -->
+                <CollectionView ItemsSource="{Binding RunResults}"
+                                SelectionMode="None"
+                                ItemSizingStrategy="MeasureAllItems"
+                                VerticalOptions="Start">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Vertical" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="2*,2*,2*,2*,2*,Auto" Padding="0,2">
+                                <Label Grid.Column="0" Style="{StaticResource CellTextStyle}" Text="{Binding Name}" />
+                                <Label Grid.Column="1" Style="{StaticResource CellTextStyle}" Text="{Binding ToneType}" />
+                                <Label Grid.Column="2" Style="{StaticResource CellTextStyle}"
+                                       Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}" />
+                                <Label Grid.Column="3" Style="{StaticResource CellTextStyle}"
+                                       Text="{Binding Time, StringFormat='{0:mm\\:ss}'}" />
+                                <Label Grid.Column="4" Style="{StaticResource CellTextStyle}"
+                                       Text="{Binding Distance, StringFormat='{0:F2}'}" />
+                                <Label Grid.Column="5" Style="{StaticResource CellTextStyle}"
+                                       HorizontalTextAlignment="Center"
+                                       Text="{Binding ArrowEnabled}" />
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Button direkt unter der Tabelle -->
+                <Button Text="Speichern und fortfahren"
+                        Command="{Binding SaveAndContinueCommand}"
+                        HorizontalOptions="Center" />
+            </VerticalStackLayout>
+        </ContentView>
+    </ScrollView>
 </ContentPage>
