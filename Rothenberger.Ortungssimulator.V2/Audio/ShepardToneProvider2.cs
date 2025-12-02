@@ -1,5 +1,6 @@
 ﻿using NAudio.Wave;
 using System;
+using System.Diagnostics;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -21,13 +22,18 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private float _depthMeters; // NEU: aktuelle Tiefe der Sondenmitte (m)
         private float _userGain = 1f;
 
-        private bool _normalizationEnabled = true;
+        private bool _normalizationEnabled = false;
         private float _normGain = 1f;
         private float _targetPeak = 0.9f;
         private float _attack = 0.04f;
         private float _release = 0.005f;
 
         private float _masterLevel = 0.7f;
+
+        // Probe-Steuerung
+        private bool _probeEnabled = false;
+        private int _probeInterval = 2048;
+        private int _probeOffsetModulo = 0;
 
         private readonly object _lock = new();
 
@@ -42,7 +48,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             float centerFreq = 440f,
             float sigma = 1.0f,
             float masterLevel = 0.7f,
-            bool normalizationEnabled = true,
+            bool normalizationEnabled = false, // Normalisierung aus
             float semitonesPerMeter = 12f,
             float octaveShiftFraction = 0f)
         {
@@ -67,6 +73,9 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _normalizationEnabled = normalizationEnabled;
 
             RandomizePhases();
+
+            // Probe beim Start aktivieren (Standardwerte: alle 2048 Samples)
+            EnableSampleProbe(true, intervalSamples: 2048, intervalPhaseOffset: 0);
         }
 
         private void RandomizePhases()
@@ -75,6 +84,16 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             for (int i = 0; i < _phases.Length; i++)
             {
                 _phases[i] = (float)(rng.NextDouble() * 2.0 * Math.PI);
+            }
+        }
+
+        public void EnableSampleProbe(bool enabled, int intervalSamples = 2048, int intervalPhaseOffset = 0)
+        {
+            lock (_lock)
+            {
+                _probeEnabled = enabled;
+                _probeInterval = Math.Max(1, intervalSamples);
+                _probeOffsetModulo = Math.Clamp(intervalPhaseOffset, 0, _probeInterval - 1);
             }
         }
 
@@ -106,17 +125,14 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             lock (_lock)
             {
-                // Clamp an den Kugelradius; tatsächliche Nutzung erfolgt gegen r2D(z) im ComputeBaseFrequency
                 _currentDistance = Math.Clamp(distanceMeters, 0f, _radiusMeters);
             }
         }
 
-        // NEU: Tiefe der Sondenmitte setzen (0.._radiusMeters sinnvoll)
         public void SetDepth(float depthMeters)
         {
             lock (_lock)
             {
-                // Tiefe darf physikalisch nicht größer als Kugelradius sein, sonst r2D = 0
                 _depthMeters = Math.Clamp(depthMeters, 0f, _radiusMeters);
             }
         }
@@ -135,7 +151,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             }
         }
 
-        // Physikalisch korrekt mit Tiefe:
         private float ComputeBaseFrequency(float distanceMeters, float depthMeters)
         {
             float R = _radiusMeters;
@@ -147,21 +162,15 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             }
 
             float r2d = MathF.Sqrt(r2dSq);
-
-            // Distanz normalisieren (0 am Zentrum, 1 am Rand)
             float normalized = Math.Clamp(distanceMeters / r2d, 0f, 1f);
-
-            // Nähe: 1 am Zentrum, 0 am Rand
             float proximityNormalized = 1f - normalized;
 
-            // Oktavverschiebung über Nähe (positives semitonesPerMeter => Ton steigt bei Annäherung)
             float deltaOctaves = (_semitonesPerMeter / 12f) * proximityNormalized;
 
             float cyclePos = deltaOctaves + _octaveShiftFraction;
             cyclePos = cyclePos - MathF.Floor(cyclePos); // in [0,1)
 
             float fBase = _baseFreq * (float)Math.Pow(2.0, cyclePos);
-            // Keine Clamps mehr auf hörbaren Bereich
             return Math.Max(0.001f, fBase);
         }
 
@@ -170,8 +179,11 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             float localGain;
             float localDistance;
             float localDepth;
-            bool localNormEnabled;
+            bool localNormEnabled; // bleibt vorhanden, wird aber ignoriert
             float localMaster;
+            bool localProbeEnabled;
+            int localProbeInterval;
+            int localProbeOffsetModulo;
 
             lock (_lock)
             {
@@ -180,6 +192,10 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 localDepth = _depthMeters;
                 localNormEnabled = _normalizationEnabled;
                 localMaster = _masterLevel;
+
+                localProbeEnabled = _probeEnabled;
+                localProbeInterval = _probeInterval;
+                localProbeOffsetModulo = _probeOffsetModulo;
             }
 
             float baseFrequency = ComputeBaseFrequency(localDistance, localDepth);
@@ -196,7 +212,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 {
                     float fComponent = baseFrequency * (float)Math.Pow(2.0, k);
 
-                    // Gewichtung um centerFreq mittels Gauß-Hüllkurve
                     float log2Ratio = (float)(Math.Log(fComponent / _centerFreq) / Math.Log(2.0));
                     float scaled = log2Ratio / _sigma;
                     float amp = (float)Math.Exp(-0.5f * scaled * scaled);
@@ -204,7 +219,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     float phaseInc = 2f * MathF.PI * fComponent / _sampleRate;
                     _phases[idx] += phaseInc;
 
-                    // Phase im [0, 2π) halten, verhindert float-Overflow
                     if (_phases[idx] > MathF.PI * 2f)
                         _phases[idx] -= MathF.PI * 2f;
                     else if (_phases[idx] < 0f)
@@ -219,21 +233,28 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 if (abs > peak) peak = abs;
 
                 buffer[offset + n] = sample;
+
+                // Stichprobe ROH: direkt an der ausgewählten Stelle
+                if (localProbeEnabled && ((n + localProbeOffsetModulo) % localProbeInterval == 0))
+                {
+                    Debug.WriteLine($"[ShepardProbe] n={n}, raw={sample:F6}, dist={localDistance:F3}m, depth={localDepth:F3}m, fBase={baseFrequency:F3}Hz");
+                }
             }
 
-            if (localNormEnabled && peak > 0f)
-            {
-                float desiredGain = _targetPeak / peak;
-                if (desiredGain < _normGain)
-                    _normGain = _normGain * (1f - _release) + desiredGain * _release;
-                else
-                    _normGain = _normGain * (1f - _attack) + desiredGain * _attack;
-            }
+            // Dynamische Normalisierung entfernt: kein Update von _normGain
 
-            float finalGain = localGain * localMaster * _normGain;
+            // Konstanter finaler Gain nur über User/Master
+            float finalGain = localGain * localMaster;
+
             for (int n = 0; n < count; n++)
             {
                 buffer[offset + n] *= finalGain;
+
+                // Stichprobe FINAL: nach Gain/Normalisierung
+                if (localProbeEnabled && ((n + localProbeOffsetModulo) % localProbeInterval == 0))
+                {
+                    Debug.WriteLine($"[ShepardProbe] n={n}, final={buffer[offset + n]:F6}, gain={finalGain:F4}");
+                }
             }
 
             return count;
