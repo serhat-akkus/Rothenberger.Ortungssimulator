@@ -1,16 +1,15 @@
-﻿using System.Collections.ObjectModel;
-using System.Windows.Input;
-using Rothenberger.Ortungssimulator.V2.Models;
-using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using Rothenberger.Ortungssimulator.V2.Views;
 using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
-using Microsoft.Maui.ApplicationModel;
+using Rothenberger.Ortungssimulator.V2.Models;
+using Rothenberger.Ortungssimulator.V2.Views;
+using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
-    public partial class TestPageViewModel : ObservableObject
+    public partial class TestPageViewModel : ObservableObject, IDisposable
     {
         [ObservableProperty] private string timerText = "00:00";
         [ObservableProperty] private string distanceText = "";
@@ -102,7 +101,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ToneTypeDisplay = selectedToneType?.Name ?? "";
         }
 
-        private void UpdateAudioForMousePosition()
+        public void UpdateAudioForMousePosition()
         {
             if (!isAudioActive)
                 return;
@@ -222,8 +221,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                         TimeSpan.FromMilliseconds(50),
                         () => ProbePosition,
                         () => CurrentMousePosition,
-                        rot => ArrowRotation = rot,
-                        () => UpdateAudioForMousePosition());
+                        rot => ArrowRotation = rot);
                 }
                 // Optional: else-Block für Logging oder Fehlerbehandlung, falls dispatcher null ist
             }
@@ -311,15 +309,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ArrowRotation = Math.Atan2(dy, dx) * 180 / Math.PI;
         }
 
-        public void UpdateCurrentMousePosition(Point mousePosition)
-        {
-            CurrentMousePosition = _canvas.ClampToCanvas(mousePosition);
-            if (!IsRunNotStarted)
-            {
-                UpdateAudioForMousePosition();
-            }
-        }
-
         private void InitializeAudio()
         {
             StopAudio();
@@ -364,19 +353,38 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             StopShepardSweepProvider();
         }
 
+        // 1. Callback-Handler im ViewModel definieren:
+        private void OnShepardSweepCycleCount(int cycleCount)
+        {
+            MainThread.BeginInvokeOnMainThread(() => ShepardCycleCount = cycleCount);
+        }
+
+        private void OnShepardSweepFreqProgress(double freq, double progress)
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                CurrentShepardFrequency = freq;
+                ShepardProgress = progress;
+            });
+        }
+
+        // 2. PlayShepardSweepProvider entsprechend anpassen:
         private void PlayShepardSweepProvider()
         {
             if (_anyAudioActive) StopAudio();
             StopShepardSweepProvider();
             _anyAudioActive = true;
 
+            // Nutze den geladenen ToneType für "shepard"
+            var shepardType = selectedToneType;
+
             int sampleRate = 44100;
-            int mMax = 12;
-            int nMax = 7;
-            double fMin = 70.0;
-            double sigma = 0.5;
-            double semitonesPerSecond = 1.5;
-            double octaveOffset = 0.0;
+            int mMax = shepardType.MMax ?? 12;
+            int nMax = shepardType.NMax ?? 7;
+            double fMin = shepardType.FMin ?? 70.0;
+            double sigma = shepardType.Sigma ?? 0.5;
+            double semitonesPerSecond = shepardType.SensitivitySemitonesPerSecond ?? 1.5;
+            double octaveOffset = shepardType.OctaveOffset ?? 0.0;
 
             ShepardCycleCount = 0;
             ShepardProgress = 0;
@@ -389,12 +397,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 fMin,
                 sigma,
                 semitonesPerSecond,
-                cycleCount => MainThread.BeginInvokeOnMainThread(() => ShepardCycleCount = cycleCount),
-                (freq, progress) => MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    CurrentShepardFrequency = freq;
-                    ShepardProgress = progress;
-                }),
+                OnShepardSweepCycleCount,
+                OnShepardSweepFreqProgress,
                 octaveOffset);
 
             shepardSweepWaveOut = new WaveOutEvent { DesiredLatency = 100 };
@@ -402,7 +406,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             shepardSweepWaveOut.Volume = 0.2f;
             shepardSweepWaveOut.Play();
 
-            // Initialen Distanzzustand setzen
             double horiz2dMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
             shepardSweepProvider.UpdateDistance3DState(horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
 
@@ -430,18 +433,42 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             (StopShepardSweepProviderCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
 
+        // 3. Analog für InitializeShepardMouseAudio:
+        private void OnShepardMouseCycleCount(int cycle)
+        {
+            if (_disposed) return;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (_disposed) return;
+                ShepardCycleCount = cycle;
+            });
+        }
+
+        private void OnShepardMouseFreqProgress(double freq, double progress)
+        {
+            if (_disposed) return;
+            MainThread.BeginInvokeOnMainThread(() =>
+            {
+                if (_disposed) return;
+                CurrentShepardFrequency = freq;
+                ShepardProgress = progress;
+            });
+        }
+
         private void InitializeShepardMouseAudio()
         {
-            // Bestehende Audio-Ströme stoppen, wenn nötig
             StopAudio();
 
-            // Shepard-Parameter aus ToneType (Fallbacks vorhanden)
             int sampleRate = 44100;
             int mMax = selectedToneType.MMax ?? 12;
             int nMax = selectedToneType.NMax ?? 10;
             double fMin = selectedToneType.FMin ?? 55.0;
             double sigma = selectedToneType.Sigma ?? 0.8;
-            double sensitivity = selectedToneType.SensitivitySemitonesPerSecond ?? 24.0;
+            double desiredCycles = selectedToneType.ShepardCyclesFromEdgeToProbe ?? 3.0;
+            double shepardRadius = _canvas.ProbeRadiusMeters; // z.B. 5.0
+
+            // Halbtöne pro Meter, damit auf shepardRadius genau desiredCycles Zyklen durchlaufen werden:
+            double semitonesPerMeter = (desiredCycles * mMax) / shepardRadius;
 
             shepardMouseProvider?.Dispose();
             shepardMouseWaveOut?.Dispose();
@@ -452,13 +479,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 nMax: nMax,
                 fMin: fMin,
                 sigma: sigma,
-                sensitivitySemitonesPerSecond: sensitivity,
-                cycleCallback: cycle => MainThread.BeginInvokeOnMainThread(() => ShepardCycleCount = cycle),
-                freqProgressCallback: (freq, progress) => MainThread.BeginInvokeOnMainThread(() =>
-                {
-                    CurrentShepardFrequency = freq;
-                    ShepardProgress = progress;
-                }),
+                sensitivitySemitonesPerSecond: semitonesPerMeter,
+                cycleCallback: OnShepardMouseCycleCount,
+                freqProgressCallback: OnShepardMouseFreqProgress,
                 octaveOffset: 0.0,
                 updateIntervalSamples: 2048);
 
@@ -467,7 +490,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             shepardMouseWaveOut.Volume = 0.25f;
             shepardMouseWaveOut.Play();
 
-            // initialen Distanzzustand setzen
             double horiz2dMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
             shepardMouseProvider.UpdateDistance3DState(horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
 
@@ -475,5 +497,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         }
 
         public bool CanStartShepard => IsRunNotStarted; // oder ein eigener Zustand
+
+        private bool _disposed = false;
+
+        public void Dispose()
+        {
+            _disposed = true;
+            StopAudio();
+            _runTimerService?.Dispose();
+            _uiTimer?.Stop();
+            _uiTimer = null;
+        }
     }
 }

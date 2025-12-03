@@ -1,4 +1,4 @@
-using Microsoft.Maui.Dispatching;
+ï»¿using Microsoft.Maui.Dispatching;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -8,7 +8,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
         public double ArrowRotation { get; private set; }
 
-        public void Start(IDispatcher dispatcher, TimeSpan interval, Func<Point> getProbePosition, Func<Point> getMousePosition, Action<double> setArrowRotation, Action tickSideEffect)
+        public void Start(IDispatcher dispatcher, TimeSpan interval, Func<Point> getProbePosition, Func<Point> getMousePosition, Action<double> setArrowRotation)
         {
             Stop();
 
@@ -25,9 +25,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
                 // Rotation ins ViewModel schreiben
                 setArrowRotation(ArrowRotation);
-
-                // Zusätzliche Tick-Logik (z. B. Audio-Update)
-                tickSideEffect?.Invoke();
             };
             _timer.Start();
         }

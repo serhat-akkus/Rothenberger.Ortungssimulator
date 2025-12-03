@@ -50,6 +50,8 @@
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 24.0
+    "SensitivitySemitonesPerSecond": 1.0,
+    "OctaveOffset": 0,
+    "ShepardCyclesFromEdgeToProbe": 3
   }
 ]
