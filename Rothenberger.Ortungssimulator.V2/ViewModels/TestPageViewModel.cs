@@ -52,6 +52,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private ShepardToneSweepProvider? shepardSweepProvider;
 
         private IDispatcherTimer? _uiTimer;
+        private RunTimerService? _runTimerService;
 
         // Commands
         public ICommand StartRunCommand { get; }
@@ -207,28 +208,24 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
-            _uiTimer = Application.Current?.Dispatcher.CreateTimer();
-            if (_uiTimer != null)
-            {
-                runStartTime = DateTime.Now;
-                _uiTimer.Interval = TimeSpan.FromSeconds(1);
-                _uiTimer.Tick += (_, _) =>
-                {
-                    var elapsed = DateTime.Now - runStartTime;
-                    TimerText = elapsed.ToString(@"mm\:ss");
-                };
-                _uiTimer.Start();
-            }
+            _runTimerService?.Dispose();
+            _runTimerService = new RunTimerService(text => TimerText = text);
+            _runTimerService.Start();
 
             if (arrowEnabled)
             {
-                _arrowHelper.Start(
-                    Dispatcher.GetForCurrentThread(),
-                    TimeSpan.FromMilliseconds(50),
-                    () => ProbePosition,
-                    () => CurrentMousePosition,
-                    rot => ArrowRotation = rot,
-                    () => UpdateAudioForMousePosition());
+                var dispatcher = Dispatcher.GetForCurrentThread();
+                if (dispatcher != null)
+                {
+                    _arrowHelper.Start(
+                        dispatcher,
+                        TimeSpan.FromMilliseconds(50),
+                        () => ProbePosition,
+                        () => CurrentMousePosition,
+                        rot => ArrowRotation = rot,
+                        () => UpdateAudioForMousePosition());
+                }
+                // Optional: else-Block für Logging oder Fehlerbehandlung, falls dispatcher null ist
             }
 
             // Initialisierung abhängig vom Tontyp
@@ -257,6 +254,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public void OnCanvasClicked(Point mousePosition)
         {
             if (IsRunNotStarted) return;
+
+            _runTimerService?.Stop();
 
             _uiTimer?.Stop();
             _uiTimer = null;
