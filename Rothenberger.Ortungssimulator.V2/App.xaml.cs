@@ -1,4 +1,6 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿using System;
+using System.Threading.Tasks;
+using Microsoft.Maui.Controls;
 
 namespace Rothenberger.Ortungssimulator.V2
 {
@@ -7,6 +9,21 @@ namespace Rothenberger.Ortungssimulator.V2
         public App()
         {
             InitializeComponent();
+
+            AppDomain.CurrentDomain.UnhandledException += OnUnhandledException;
+            TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
+        }
+
+        private void OnUnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            // Fehlerbehandlung, z.B. Logging oder Anzeige einer Meldung
+            // Beispiel: Fehler in Datei schreiben oder Dialog anzeigen
+        }
+
+        private void OnUnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            // Fehlerbehandlung, z.B. Logging oder Anzeige einer Meldung
+            e.SetObserved();
         }
 
         protected override Window CreateWindow(IActivationState? activationState)
