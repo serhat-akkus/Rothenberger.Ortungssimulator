@@ -42,5 +42,14 @@
       146.832,
       130.813
     ]
+  },
+  {
+    "Id": "shepard",
+    "Name": "Shepard (Mausgesteuert)",
+    "MMax": 12,
+    "NMax": 10,
+    "FMin": 55.0,
+    "Sigma": 1,
+    "SensitivitySemitonesPerSecond": 24.0
   }
 ]
