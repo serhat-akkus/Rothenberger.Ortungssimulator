@@ -102,15 +102,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (!isAudioActive || sineProvider == null)
                 return;
 
-            // Position und Distanz holen
-            double distanceMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
-            double normalized = _canvas.NormalizeDistance(distanceMeters);
+            // 2D-Horizontaldistanz in Metern
+            double horiz2dMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
+            // 3D-Distanz nur für Anzeigezwecke (optional)
+            double d3Meters = Distance3DHelper.Compute3D(horiz2dMeters, ProbeDepthMeters);
+            // Normalisierung in [0..1] mit near=Tiefe, far=Radius
+            double tNorm = Distance3DHelper.Normalize(d3Meters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
+            // Proximity (1 nah .. 0 fern)
+            double proximity = 1.0 - tNorm;
 
-            // Kleines Epsilon tolerieren, um "0.0" Grenzfälle zu vermeiden
             const double eps = 1e-6;
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
 
-            // Fallback bei fehlenden ToneType/Id: hörbar machen
+            // Fallback: minimale Hörbarkeit
             if (string.IsNullOrWhiteSpace(toneId))
             {
                 sineProvider.SetVolume(0.6f);
@@ -119,22 +123,27 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 return;
             }
 
-            // Lautstärke-Bedingung nicht zu streng, kurze Hörbarkeit auch bei sehr kleinen normalized
-            if (distanceMeters <= 10.0 && normalized > eps)
+            // Hörbarkeit mit 3D-Distanz: innerhalb Radius und minimale Nähe
+            if (d3Meters <= EffectiveProbeRadiusMeters && proximity > eps)
             {
-                // reguläre Pfade
                 lastFrequency = toneId switch
                 {
-                    "sinus_linear" => AudioUpdateHelper.HandleSinusLinear(sineProvider, selectedToneType, normalized, distanceMeters, lastFrequency),
-                    "sinus_log" => AudioUpdateHelper.HandleSinusLog(sineProvider, selectedToneType, normalized, distanceMeters, lastFrequency),
-                    "tonleiter_diskret" => AudioUpdateHelper.HandleTonleiterDiskret(sineProvider, selectedToneType, normalized, distanceMeters, lastFrequency),
-                    _ => AudioUpdateHelper.HandleDefault(sineProvider),
+                    // Umschalten auf 3D-Varianten der Audio-Updates
+                    "sinus_linear"      => AudioUpdateHelper.HandleSinusLinear3D(sineProvider, selectedToneType, horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters, lastFrequency),
+                    "sinus_log"         => AudioUpdateHelper.HandleSinusLog3D(sineProvider, selectedToneType, horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters, lastFrequency),
+                    "tonleiter_diskret" => AudioUpdateHelper.HandleTonleiterDiskret3D(sineProvider, selectedToneType, horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters, lastFrequency),
+                    _                   => AudioUpdateHelper.HandleDefault(sineProvider),
                 };
             }
             else
             {
-                // Stumm schalten außerhalb Bereich
                 sineProvider.SetVolume(0.0f);
+            }
+
+            // Falls Shepard-Streaming aktiv ist, nur Distanzzustand aktualisieren (kein Frequenz-Mapping hier)
+            if (shepardSweepProvider != null)
+            {
+                shepardSweepProvider.UpdateDistance3DState(horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
             }
         }
 
@@ -335,6 +344,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             shepardSweepWaveOut.Init(shepardSweepProvider);
             shepardSweepWaveOut.Volume = 0.2f;
             shepardSweepWaveOut.Play();
+
+            // Initialen Distanzzustand setzen
+            double horiz2dMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
+            shepardSweepProvider.UpdateDistance3DState(horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
 
             (StopShepardSweepProviderCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }

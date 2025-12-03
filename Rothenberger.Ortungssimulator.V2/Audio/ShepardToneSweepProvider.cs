@@ -10,7 +10,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly int _nMax;
         private readonly double _fMin;
         private readonly double _sigma;
-        private readonly double _octaveOffset; // Neu: Oktavenverschiebung
+        private readonly double _octaveOffset;
         private readonly double[] _phases;
         private readonly double[] _amps;
         private readonly double[] _freqs;
@@ -25,6 +25,10 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private bool _disposed;
         private volatile bool _stopped;
 
+        // Neu: Zustände für 3D-Distanz (nur Berechnung/Speicherung, keine Frequenzänderung)
+        private double _currentD3Meters;
+        private double _currentTNormalized; // 0..1 (0=nah, 1=fern) gemäß Normalize()
+
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
 
@@ -37,7 +41,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             double semitonesPerSecond,
             Action<int>? cycleCallback,
             Action<double, double>? freqProgressCallback,
-            double octaveOffset = 0.0,          // Neu: Standard 0
+            double octaveOffset = 0.0,
             int updateIntervalSamples = 2048)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
@@ -54,6 +58,15 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _phases = new double[_nMax];
             _amps   = new double[_nMax];
             _freqs  = new double[_nMax];
+        }
+
+        // Aufruf bei Mausbewegung: setzt nur Distanzzustand
+        public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
+        {
+            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
+            double t  = Distance3DHelper.Normalize(d3, probeDepthMeters, probeRadius3DMeters);
+            _currentD3Meters = d3;
+            _currentTNormalized = t;
         }
 
         public void RequestStop() => _stopped = true;
@@ -87,10 +100,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     int octaveWraps = (int)Math.Floor(compositeIndex / _nMax);
                     double effectiveIndex = compositeIndex - octaveWraps * _nMax;
 
-                    // Neu: Oktavenverschiebung (tiefer starten)
                     effectiveIndex -= _octaveOffset;
 
-                    // Wieder in [0, nMax) falten
                     while (effectiveIndex < 0) effectiveIndex += _nMax;
                     while (effectiveIndex >= _nMax) effectiveIndex -= _nMax;
 
@@ -119,8 +130,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 if (_sampleCounter >= _updateIntervalSamples)
                 {
                     _sampleCounter = 0;
-                    double progress = (_mContinuous % _mMax) / _mMax; // 0..1
-                    // Für UI: virtuelle Grundfrequenz mit gleicher Verschiebung
+                    double progress = (_mContinuous % _mMax) / _mMax;
                     double virtualBase = _fMin * Math.Pow(2.0, (progress * _nMax - _octaveOffset) / _nMax);
                     _freqProgressCallback?.Invoke(virtualBase, progress);
                 }
