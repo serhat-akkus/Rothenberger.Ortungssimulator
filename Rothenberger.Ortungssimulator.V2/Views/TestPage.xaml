@@ -161,7 +161,7 @@
                    CornerRadius="8">
                 <StackLayout Spacing="6">
                     <Label Text="Shepard-Sweep Status" FontAttributes="Bold" />
-                    <Label Text="{Binding CurrentShepardFrequency, StringFormat='Aktuelle Grundfrequenz: {0:F2} Hz'}" />
+                    <Label Text="{Binding CurrentFrequency, StringFormat='Aktuelle Grundfrequenz: {0:F2} Hz'}" />
                     <Label Text="{Binding ShepardCycleCount, StringFormat='Abgeschlossene Zyklen: {0}'}" />
                     <StackLayout Orientation="Horizontal" Spacing="8">
                         <Label Text="Zyklus-Fortschritt:" />

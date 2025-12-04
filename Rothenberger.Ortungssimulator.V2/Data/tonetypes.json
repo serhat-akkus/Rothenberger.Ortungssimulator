@@ -3,14 +3,16 @@
     "Id": "sinus_linear",
     "Name": "Sinus - linear",
     "MinFrequency": 130,
-    "MaxFrequency": 1400
+    "MaxFrequency": 1400,
+    "Type": "sinus_linear"
   },
   {
     "Id": "sinus_log",
     "Name": "Sinus - logoratihmisch",
     "MinFrequency": 130,
     "MaxFrequency": 1400,
-    "LogBase": "e"
+    "LogBase": "e",
+    "Type": "sinus_log"
   },
   {
     "Id": "tonleiter_diskret",
@@ -41,17 +43,67 @@
       164.814,
       146.832,
       130.813
-    ]
+    ],
+    "Type": "tonleiter_diskret"
   },
   {
     "Id": "shepard",
-    "Name": "Shepard (Mausgesteuert)",
+    "Name": "Shepard (N=10;M=12)",
     "MMax": 12,
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 1,
     "SensitivitySemitonesPerSecond": 1.0,
     "OctaveOffset": 0,
-    "ShepardCyclesFromEdgeToProbe": 3
+    "ShepardCyclesFromEdgeToProbe": 3,
+    "Type": "shepard"
+  },
+  {
+    "Id": "shepard2",
+    "Name": "Shepard (N=10;M=12;Offset=1)",
+    "MMax": 12,
+    "NMax": 10,
+    "FMin": 55.0,
+    "Sigma": 1,
+    "SensitivitySemitonesPerSecond": 1.0,
+    "OctaveOffset": 0,
+    "ShepardCyclesFromEdgeToProbe": 3,
+    "Type": "shepard"
+  },
+  {
+    "Id": "shepard3",
+    "Name": "Shepard (N=10;M=12;Sigma=0.8)",
+    "MMax": 12,
+    "NMax": 10,
+    "FMin": 55.0,
+    "Sigma": 0.8,
+    "SensitivitySemitonesPerSecond": 1.0,
+    "OctaveOffset": 0,
+    "ShepardCyclesFromEdgeToProbe": 3,
+    "Type": "shepard"
+  },
+  {
+    "Id": "shepard4",
+    "Name": "Shepard (N=10;M=12;Sigma=0.8;Cycles=1)",
+    "MMax": 12,
+    "NMax": 10,
+    "FMin": 55.0,
+    "Sigma": 1,
+    "SensitivitySemitonesPerSecond": 1.0,
+    "OctaveOffset": 0,
+    "ShepardCyclesFromEdgeToProbe": 1,
+    "Type": "shepard"
+  },
+  {
+    "Id": "shepard5",
+    "Name": "Shepard (N=6;M=12)",
+    "MMax": 12,
+    "NMax": 6,
+    "FMin": 55.0,
+    "Sigma": 1,
+    "SensitivitySemitonesPerSecond": 1.0,
+    "OctaveOffset": 0,
+    "ShepardCyclesFromEdgeToProbe": 3,
+    "Type": "shepard"
   }
 ]
