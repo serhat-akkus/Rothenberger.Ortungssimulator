@@ -257,7 +257,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             _uiTimer?.Stop();
             _uiTimer = null;
-            StopArrowTimer();
+            //StopArrowTimer();
             StopAudio();
 
             IsClickPointVisible = true;

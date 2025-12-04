@@ -32,7 +32,6 @@
                 WidthRequest="1000"
                 AbsoluteLayout.LayoutBounds="0,0,1000,1000"
                 AbsoluteLayout.LayoutFlags="None"
-                PointerMoved="CanvasView_PointerMoved"
                 InputTransparent="{Binding IsRunNotStarted}" />
 
             <Border
