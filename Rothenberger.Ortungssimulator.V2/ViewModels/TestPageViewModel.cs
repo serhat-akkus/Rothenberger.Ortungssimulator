@@ -72,6 +72,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private IWavePlayer? shepardMouseWaveOut;
         private ShepardToneMouseProvider? shepardMouseProvider;
 
+        private bool _isEingeklinkt = false;
+
+        private IAudioProvider? einklinkProvider;
+        private IAudioProvider? ausklinkProvider;
+
         public TestPageViewModel()
         {
             StartRunCommand = new RelayCommand(StartRun);
@@ -85,6 +90,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         public double EffectiveProbeRadiusMeters => _canvas.EffectiveProbeRadiusMeters;
         public double ProbeRadiusPixels => _canvas.ProbeRadiusPixels;
+        public double EinklinkRadiusMeters => EffectiveProbeRadiusMeters / 20.0;
+        public double EinklinkRadiusPixels => ProbeRadiusPixels / 20.0;
 
         public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters)
         {
@@ -101,6 +108,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             OnPropertyChanged(nameof(ProbeRadiusPixels));
             UserNameDisplay = userName;
             ToneTypeDisplay = selectedToneType?.Name ?? "";
+
+            einklinkProvider = new EinklinkSoundProvider();
+            ausklinkProvider = new AusklinkSoundProvider();
         }
 
         public void UpdateAudioForMousePosition()
@@ -108,36 +118,49 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (!isAudioActive)
                 return;
 
-            // Prüfen, ob die Mausposition außerhalb des Canvas ist
             if (CurrentMousePosition.X == -1 && CurrentMousePosition.Y == -1)
             {
-                // Audioausgabe stoppen
                 sineProvider?.SetVolume(0.0f);
                 if (shepardMouseWaveOut is WaveOutEvent wo)
                     wo.Volume = 0.0f;
                 return;
             }
 
-            var toneId = selectedToneType?.Id?.ToLowerInvariant();
-
-            // 2D-Horizontaldistanz in Metern
             double horiz2dMeters = _canvas.CalculateDistanceMeters(ProbePosition, CurrentMousePosition);
-            // 3D-Distanz
-            double d3Meters = Distance3DHelper.Compute3D(horiz2dMeters, ProbeDepthMeters);
-            // Normalisierung in [0..1]
-            double tNorm = Distance3DHelper.Normalize(d3Meters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
-            // Nähe
-            double proximity = 1.0 - tNorm;
 
+            // --- EINKLINK-LOGIK --- (MUSS VOR ALLEM ANDEREN STEHEN!)
+            if (!_isEingeklinkt && horiz2dMeters <= EinklinkRadiusMeters)
+            {
+                _isEingeklinkt = true;
+                PlayEinklinkSound();
+                sineProvider?.SetVolume(0.0f);
+                if (shepardMouseWaveOut is WaveOutEvent wo)
+                    wo.Volume = 0.0f;
+                return;
+            }
+            else if (_isEingeklinkt && horiz2dMeters > EinklinkRadiusMeters)
+            {
+                _isEingeklinkt = false;
+                PlayAusklinkSound();
+                // Provider wieder aktivieren: Methode läuft weiter!
+            }
+
+            // Nur ausführen, wenn NICHT eingeklinkt!
+            if (_isEingeklinkt)
+                return;
+
+            // ... ab hier die bisherige Provider-Logik ...
+            var toneId = selectedToneType?.Id?.ToLowerInvariant();
+            double d3Meters = Distance3DHelper.Compute3D(horiz2dMeters, ProbeDepthMeters);
+            double tNorm = Distance3DHelper.Normalize(d3Meters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
+            double proximity = 1.0 - tNorm;
             const double eps = 1e-6;
 
-            // Shepard-Streaming: immer nur Distanzzustand aktualisieren
             if (shepardSweepProvider != null)
             {
                 shepardSweepProvider.UpdateDistance3DState(horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
             }
 
-            // Fallback für unbekannten Typ
             if (string.IsNullOrWhiteSpace(toneId))
             {
                 if (sineProvider != null)
@@ -149,28 +172,22 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 return;
             }
 
-            // Hörbarkeit: innerhalb Radius und minimale Nähe
             bool audible = d3Meters <= EffectiveProbeRadiusMeters && proximity > eps;
 
             if (toneId == "shepard")
             {
-                // Shepard: Provider muss existieren, da getrennt initialisiert
                 if (shepardMouseProvider == null || shepardMouseWaveOut == null)
                     return;
 
-                // Zustand aktualisieren
                 AudioUpdateHelper.UpdateShepardMouse3D(shepardMouseProvider, horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters);
 
-                // Lautstärke steuerung für Shepard
                 if (shepardMouseWaveOut is WaveOutEvent wo)
                     wo.Volume = audible ? 0.25f : 0.0f;
 
-                // Anzeige-Frequenz kommt über Callback; lastFrequency kann neutral bleiben
                 lastFrequency = 0.0;
                 return;
             }
 
-            // Ab hier: Sinus/andere Typen, benötigen sineProvider
             if (sineProvider == null)
                 return;
 
@@ -360,7 +377,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 shepardMouseWaveOut.Dispose();
                 shepardMouseWaveOut = null;
             }
-            shepardMouseProvider?.Dispose();
             shepardMouseProvider = null;
 
             // optional: auch den Shepard-Sweep stoppen, falls aktiv
@@ -521,6 +537,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _runTimerService?.Dispose();
             _uiTimer?.Stop();
             _uiTimer = null;
+        }
+
+        private void PlayEinklinkSound()
+        {
+            einklinkProvider?.Play();
+        }
+
+        private void PlayAusklinkSound()
+        {
+            ausklinkProvider?.Play();
         }
     }
 }

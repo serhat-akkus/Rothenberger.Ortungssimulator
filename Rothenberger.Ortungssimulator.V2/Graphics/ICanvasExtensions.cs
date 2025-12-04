@@ -31,16 +31,22 @@ namespace Rothenberger.Ortungssimulator.V2.Graphics
             // Mittelpunkt (Sonde selbst)
             canvas.FillColor = Colors.Blue;
             canvas.FillCircle((float)p.X, (float)p.Y, 6);
+
+            // Einklinkradius
+            var fillColor = Colors.Blue.WithAlpha(0.5f);
+            var strokeColor = Colors.Blue.WithAlpha(0.8f);
+            var strokeSize = 1f;
+            canvas.DrawProbeRadius(probePosition, radiusPixels, fillColor, strokeColor, strokeSize);
         }
 
-        public static void DrawProbeRadius(this ICanvas canvas, Point probePosition, double radiusPixels)
+        public static void DrawProbeRadius(this ICanvas canvas, Point probePosition, double radiusPixels, Color? fillColor, Color? strokeColor, float strokeSize)
         {
             var p = probePosition;
 
             // Transparenter Bereich (Detektionsradius)
-            canvas.FillColor = Colors.Blue.WithAlpha(0.25f);
-            canvas.StrokeColor = Colors.Blue.WithAlpha(0.6f);
-            canvas.StrokeSize = 2;
+            canvas.FillColor = fillColor;
+            canvas.StrokeColor = strokeColor;
+            canvas.StrokeSize = strokeSize;
             canvas.FillCircle((float)p.X, (float)p.Y, (float)radiusPixels);
             canvas.DrawCircle((float)p.X, (float)p.Y, (float)radiusPixels);
         }

@@ -18,11 +18,14 @@ namespace Rothenberger.Ortungssimulator.V2.Views
 
                 if (vm.IsProbeVisible)
                 {
-                    canvas.DrawProbeCircle(vm.ProbePosition, vm.ProbeRadiusPixels);
-
+                    canvas.DrawProbeCircle(vm.ProbePosition, vm.EinklinkRadiusPixels);
+                    
                     if (vm.IsProberadiusEnabled)
                     {
-                        canvas.DrawProbeRadius(vm.ProbePosition, vm.ProbeRadiusPixels);
+                        var fillColor = Colors.Blue.WithAlpha(0.25f);
+                        var strokeColor = Colors.Blue.WithAlpha(0.6f);
+                        var strokeSize = 2f;
+                        canvas.DrawProbeRadius(vm.ProbePosition, vm.ProbeRadiusPixels, fillColor, strokeColor, strokeSize);
                     }
                 }
 
