@@ -108,6 +108,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (!isAudioActive)
                 return;
 
+            // Prüfen, ob die Mausposition außerhalb des Canvas ist
+            if (CurrentMousePosition.X == -1 && CurrentMousePosition.Y == -1)
+            {
+                // Audioausgabe stoppen
+                sineProvider?.SetVolume(0.0f);
+                if (shepardMouseWaveOut is WaveOutEvent wo)
+                    wo.Volume = 0.0f;
+                return;
+            }
+
             var toneId = selectedToneType?.Id?.ToLowerInvariant();
 
             // 2D-Horizontaldistanz in Metern
@@ -198,6 +208,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             // sicherstellen: keine Shepard-Ausgabe aktiv
             StopShepardSweepProvider();
 
+            CurrentMousePosition = new Point(-1, -1);
+
             IsRunNotStarted = false;
             IsArrowBoxVisible = arrowEnabled;
             IsProbeVisible = false;
@@ -259,7 +271,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             _uiTimer?.Stop();
             _uiTimer = null;
-            //StopArrowTimer();
+            StopArrowTimer();
             StopAudio();
 
             IsClickPointVisible = true;
