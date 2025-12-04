@@ -8,6 +8,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <converters:StringNotEmptyConverter x:Key="StringNotEmptyConverter" />
+            <converters:InverseBoolConverter x:Key="InverseBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

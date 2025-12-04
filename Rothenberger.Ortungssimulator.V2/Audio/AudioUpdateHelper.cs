@@ -150,54 +150,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             return null;
         }
 
-        public static double HandleShepardMouse3D(
-            ref IWavePlayer? waveOut,
-            ref ShepardToneMouseProvider? provider,
-            int sampleRate,
-            int mMax,
-            int nMax,
-            double fMin,
-            double sigma,
-            double sensitivitySemitonesPerSecond,
-            double horiz2dMeters,
-            double probeDepthMeters,
-            double probeRadius3DMeters,
-            float outputVolume,
-            Action<int>? onCycle,
-            Action<double, double>? onProgress)
-        {
-            if (provider == null || waveOut == null)
-            {
-                provider?.Dispose();
-                waveOut?.Dispose();
-
-                provider = new ShepardToneMouseProvider(
-                    sampleRate: sampleRate,
-                    mMax: mMax,
-                    nMax: nMax,
-                    fMin: fMin,
-                    sigma: sigma,
-                    sensitivitySemitonesPerSecond: sensitivitySemitonesPerSecond,
-                    cycleCallback: onCycle,
-                    freqProgressCallback: onProgress,
-                    octaveOffset: 0.0,
-                    updateIntervalSamples: 2048);
-
-                waveOut = new WaveOutEvent { DesiredLatency = 0 };
-                waveOut.Init(provider);
-                waveOut.Volume = outputVolume;
-                waveOut.Play();
-            }
-
-            provider.UpdateDistance3DState(horiz2dMeters, probeDepthMeters, probeRadius3DMeters);
-
-            if (waveOut is WaveOutEvent wo)
-                wo.Volume = outputVolume;
-
-            // Rückgabe: für Konsistenz liefern wir fMin; ViewModel zeigt die aktuelle Frequenz über Callback an.
-            return fMin;
-        }
-
         /// <summary>
         /// Aktualisiert nur den Zustand des bereits initialisierten ShepardToneMouseProvider.
         /// Keine Initialisierung/Start von Audio-Objekten.

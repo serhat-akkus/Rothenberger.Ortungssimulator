@@ -32,6 +32,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private int shepardCycleCount;
         [ObservableProperty] private double currentShepardFrequency;
         [ObservableProperty] private double shepardProgress;
+        [ObservableProperty] private double currentFrequency;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
@@ -208,10 +209,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                     "tonleiter_diskret" => AudioUpdateHelper.HandleTonleiterDiskret3D(sineProvider, selectedToneType, horiz2dMeters, ProbeDepthMeters, EffectiveProbeRadiusMeters, lastFrequency),
                     _                   => AudioUpdateHelper.HandleDefault(sineProvider),
                 };
+
+                CurrentFrequency = lastFrequency ?? 0.0;
             }
             else
             {
                 sineProvider.SetVolume(0.0f);
+                CurrentFrequency = 0.0;
             }
         }
 
@@ -401,7 +405,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             MainThread.BeginInvokeOnMainThread(() =>
             {
-                CurrentShepardFrequency = freq;
+                CurrentFrequency = freq;
                 ShepardProgress = progress;
             });
         }
@@ -471,25 +475,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             (StopShepardSweepProviderCommand as RelayCommand)?.NotifyCanExecuteChanged();
         }
 
-        // 3. Analog für InitializeShepardMouseAudio:
-        private void OnShepardMouseCycleCount(int cycle)
+        private void OnShepardMouseFreqProgress(double freq)
         {
             if (_disposed) return;
             MainThread.BeginInvokeOnMainThread(() =>
             {
                 if (_disposed) return;
-                ShepardCycleCount = cycle;
-            });
-        }
-
-        private void OnShepardMouseFreqProgress(double freq, double progress)
-        {
-            if (_disposed) return;
-            MainThread.BeginInvokeOnMainThread(() =>
-            {
-                if (_disposed) return;
-                CurrentShepardFrequency = freq;
-                ShepardProgress = progress;
+                CurrentFrequency = freq;
             });
         }
 
@@ -518,8 +510,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 fMin: fMin,
                 sigma: sigma,
                 sensitivitySemitonesPerSecond: semitonesPerMeter,
-                cycleCallback: OnShepardMouseCycleCount,
-                freqProgressCallback: OnShepardMouseFreqProgress,
+                frequencyCallback: OnShepardMouseFreqProgress,
                 octaveOffset: 0.0,
                 updateIntervalSamples: 2048);
 
@@ -550,6 +541,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private async void PlayEinklinkSound()
         {
             einklinkProvider?.Play();
+            CurrentFrequency = 0.0;
         }
 
         private void PlayAusklinkSound()

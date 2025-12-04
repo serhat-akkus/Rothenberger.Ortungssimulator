@@ -62,6 +62,15 @@
                     WidthRequest="120"
                     InputTransparent="True" />
             </Border>
+
+            <!-- Frequenz-Label oben rechts auf dem Canvas -->
+            <Label
+                Text="{Binding CurrentFrequency, StringFormat='Frequenz: {0:F1} Hz'}"
+                FontSize="10"
+                Padding="8,4"
+                AbsoluteLayout.LayoutBounds="1,0,Auto,Auto"
+                AbsoluteLayout.LayoutFlags="PositionProportional"
+				InputTransparent="True"/>
         </AbsoluteLayout>
 
         <!-- Rechter Bereich bleibt unverändert -->

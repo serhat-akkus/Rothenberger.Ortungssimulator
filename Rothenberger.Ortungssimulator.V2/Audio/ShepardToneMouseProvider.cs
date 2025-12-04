@@ -22,9 +22,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly double[] _amps;
         private readonly double[] _freqs;
 
-        private readonly Action<int>? _cycleCallback;
-        private readonly Action<double, double>? _freqProgressCallback;
-
         private readonly int _updateIntervalSamples;
         private readonly double _sensitivitySemitonesPerSecond; // Skaliert die Tonhöhenänderung je normierter T-Geschwindigkeit
 
@@ -39,6 +36,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private long _lastUpdateTicks;      // ms (Environment.TickCount64)
         private double _semitoneVelocityPerSecond; // aus T-Geschwindigkeit abgeleitet
 
+        private readonly Action<double>? frequencyCallback;
+
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
 
@@ -51,10 +50,9 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// Skala, wie stark die Tonhöhe je Sekunde bei maximaler normierter Annäherungs-/Entfernungs-Rate (|dt/ds|=1) verändert wird.
         /// Beispiel: 12 -> eine Oktave pro Sekunde bei voller Annäherungsgeschwindigkeit.
         /// </param>
-        /// <param name="cycleCallback">Callback bei jedem neuen Shepard-Zyklus</param>
-        /// <param name="freqProgressCallback">Callback mit virtueller Basisfrequenz und Progress (0..1)</param>
         /// <param name="octaveOffset">Optionaler Oktavversatz</param>
         /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
+        /// <param name="frequencyCallback"></param>
         public ShepardToneMouseProvider(
             int sampleRate,
             int mMax,
@@ -62,8 +60,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             double fMin,
             double sigma,
             double sensitivitySemitonesPerSecond,
-            Action<int>? cycleCallback,
-            Action<double, double>? freqProgressCallback,
+            Action<double>? frequencyCallback = null,
             double octaveOffset = 0.0,
             int updateIntervalSamples = 2048)
         {
@@ -73,9 +70,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _fMin = fMin;
             _sigma = sigma;
             _octaveOffset = octaveOffset;
-
-            _cycleCallback = cycleCallback;
-            _freqProgressCallback = freqProgressCallback;
+            this.frequencyCallback = frequencyCallback;
 
             _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
             _sensitivitySemitonesPerSecond = sensitivitySemitonesPerSecond;
@@ -140,7 +135,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 if (currentCycleIndex > _lastCycleIndex)
                 {
                     _lastCycleIndex = currentCycleIndex;
-                    _cycleCallback?.Invoke(_lastCycleIndex);
                 }
 
                 double amplitudeSum = 0.0;
@@ -183,7 +177,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     _sampleCounter = 0;
                     double progress = (_mContinuous % _mMax) / _mMax;
                     double virtualBase = _fMin * Math.Pow(2.0, (progress * _nMax - _octaveOffset) / _nMax);
-                    _freqProgressCallback?.Invoke(virtualBase, progress);
+                    frequencyCallback?.Invoke(virtualBase);
                 }
             }
 
