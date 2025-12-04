@@ -35,8 +35,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private volatile bool _stopped;
 
         // Maus-/Distanz-Zustände
-        private double _currentD3Meters;
-        private double _currentTNormalized; // 0..1 (0=nah, 1=fern)
         private double _lastTNormalized;    // zur Geschwindigkeitsberechnung
         private long _lastUpdateTicks;      // ms (Environment.TickCount64)
         private double _semitoneVelocityPerSecond; // aus T-Geschwindigkeit abgeleitet
@@ -88,7 +86,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             _lastUpdateTicks = Environment.TickCount64;
             _lastTNormalized = 0.5; // Neutraler Start
-            _currentTNormalized = 0.5;
         }
 
         /// <summary>
@@ -117,8 +114,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _semitoneVelocityPerSecond = -tVelocityPerSecond * _sensitivitySemitonesPerSecond;
 
             // Zustände aktualisieren
-            _currentD3Meters = d3;
-            _currentTNormalized = t;
             _lastTNormalized = t;
             _lastUpdateTicks = nowTicks;
         }
