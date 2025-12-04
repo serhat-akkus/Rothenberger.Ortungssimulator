@@ -36,8 +36,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private long _lastUpdateTicks;      // ms (Environment.TickCount64)
         private double _semitoneVelocityPerSecond; // aus T-Geschwindigkeit abgeleitet
 
-        private readonly Action<double>? frequencyCallback;
-
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
 
@@ -52,7 +50,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// </param>
         /// <param name="octaveOffset">Optionaler Oktavversatz</param>
         /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
-        /// <param name="frequencyCallback"></param>
         public ShepardToneMouseProvider(
             int sampleRate,
             int mMax,
@@ -60,7 +57,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             double fMin,
             double sigma,
             double sensitivitySemitonesPerSecond,
-            Action<double>? frequencyCallback = null,
             double octaveOffset = 0.0,
             int updateIntervalSamples = 2048)
         {
@@ -70,7 +66,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _fMin = fMin;
             _sigma = sigma;
             _octaveOffset = octaveOffset;
-            this.frequencyCallback = frequencyCallback;
 
             _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
             _sensitivitySemitonesPerSecond = sensitivitySemitonesPerSecond;
@@ -172,13 +167,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 buffer[offset + s] = (float)sampleValue;
 
                 _sampleCounter++;
-                if (_sampleCounter >= _updateIntervalSamples)
-                {
-                    _sampleCounter = 0;
-                    double progress = (_mContinuous % _mMax) / _mMax;
-                    double virtualBase = _fMin * Math.Pow(2.0, (progress * _nMax - _octaveOffset) / _nMax);
-                    frequencyCallback?.Invoke(virtualBase);
-                }
             }
 
             return count;

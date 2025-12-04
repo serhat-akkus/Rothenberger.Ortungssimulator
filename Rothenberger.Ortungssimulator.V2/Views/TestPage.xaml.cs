@@ -17,6 +17,20 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             ArrowView.Drawable = new ArrowBoxDrawable(_viewModel);
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
             _viewModel.CurrentMousePosition = new Point(500, 500); // Canvas-Mitte
+
+            // PointerExited existiert nicht, daher MoveHoverInteraction für das Mouse-Leave-Handling verwenden.
+            CanvasView.MoveHoverInteraction += (s, e) =>
+            {
+                // Prüfe, ob die Maus außerhalb des Canvas ist (z.B. X oder Y < 0 oder > Canvasgröße)
+                var point = e.Touches.First();
+                bool isInCanvas = point.X >= 0 && point.Y >= 0 && point.X < CanvasView.Width && point.Y < CanvasView.Height;
+                // Beispiel: Setze die Mausposition auf (-1, -1), wenn außerhalb (hier nur als Platzhalter)
+                if (!isInCanvas)
+                {
+                    _viewModel.CurrentMousePosition = new Point(-1, -1);
+                    _viewModel.UpdateAudioForMousePosition();
+                }
+            };
         }
 
         private void CanvasView_StartInteraction(object sender, TouchEventArgs e)

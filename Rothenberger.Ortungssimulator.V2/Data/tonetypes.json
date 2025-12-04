@@ -53,7 +53,7 @@
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 1.0,
+    "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard"
@@ -65,7 +65,7 @@
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 1.0,
+    "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard"
@@ -77,7 +77,7 @@
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 0.8,
-    "SensitivitySemitonesPerSecond": 1.0,
+    "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard"
@@ -89,7 +89,7 @@
     "NMax": 10,
     "FMin": 55.0,
     "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 1.0,
+    "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 1,
     "Type": "shepard"
@@ -101,7 +101,7 @@
     "NMax": 6,
     "FMin": 55.0,
     "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 1.0,
+    "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard"
