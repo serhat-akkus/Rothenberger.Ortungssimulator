@@ -16,6 +16,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private string startRunButtonText = "Starte Test-Run 1";
         [ObservableProperty] private bool isRunNotStarted = true;
         [ObservableProperty] private bool isProbeVisible = false;
+        [ObservableProperty] private bool isProberadiusEnabled = false;
         [ObservableProperty] private bool isClickPointVisible = false;
         [ObservableProperty] private bool isArrowBoxVisible = false;
         [ObservableProperty] private Color canvasBackground = Colors.LightGray;
@@ -85,13 +86,14 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public double EffectiveProbeRadiusMeters => _canvas.EffectiveProbeRadiusMeters;
         public double ProbeRadiusPixels => _canvas.ProbeRadiusPixels;
 
-        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, double probeDepthMeters)
+        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters)
         {
             userName = name;
             SelectedToneType = selectedToneType;
             this.selectedToneType = selectedToneType;
             totalRuns = runCount;
             arrowEnabled = arrow;
+            IsProberadiusEnabled = showProbeRadius;
             ProbeDepthMeters = probeDepthMeters;
             _canvas.SetDepth(ProbeDepthMeters);
             startRunButtonText = $"Starte Test-Run {currentRun}";

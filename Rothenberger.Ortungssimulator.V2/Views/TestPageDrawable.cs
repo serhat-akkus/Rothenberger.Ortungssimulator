@@ -19,6 +19,11 @@ namespace Rothenberger.Ortungssimulator.V2.Views
                 if (vm.IsProbeVisible)
                 {
                     canvas.DrawProbeCircle(vm.ProbePosition, vm.ProbeRadiusPixels);
+
+                    if (vm.IsProberadiusEnabled)
+                    {
+                        canvas.DrawProbeRadius(vm.ProbePosition, vm.ProbeRadiusPixels);
+                    }
                 }
 
                 if (vm.IsClickPointVisible)

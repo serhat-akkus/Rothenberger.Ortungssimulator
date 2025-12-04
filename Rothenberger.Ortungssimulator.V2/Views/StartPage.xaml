@@ -37,6 +37,13 @@
             <Label Text="Hilfspfeil anzeigen" VerticalOptions="Center" Margin="-80,0,0,0" />
         </HorizontalStackLayout>
 
+        <!-- Checkbox + Text Sondenradius anzeigen -->
+		<!-- Checkbox + Text sehr nah -->
+		<HorizontalStackLayout Spacing="0">
+			<CheckBox IsChecked="{Binding ShowProbeRadius}" VerticalOptions="Center" />
+			<Label Text="Zeige Sondenradius an" VerticalOptions="Center" Margin="-80,0,0,0" />
+		</HorizontalStackLayout>
+
         <Button Text="Start"
                 Command="{Binding StartCommand}" />
     </VerticalStackLayout>
