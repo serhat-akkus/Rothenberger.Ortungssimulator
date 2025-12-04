@@ -7,25 +7,39 @@
     BackgroundColor="White"
     Padding="10">
 
-    <Grid RowDefinitions="Auto,*"
+    <Grid RowDefinitions="Auto,Auto,*"
           ColumnDefinitions="1000,Auto"
           ColumnSpacing="12">
 
-        <!-- Kopf -->
-        <StackLayout Grid.Row="0" Grid.Column="0" HorizontalOptions="Center" Margin="0,20,0,0" Spacing="6">
-            <StackLayout Orientation="Horizontal" Spacing="24" HorizontalOptions="Center">
-                <Label Text="{Binding ProbeDepthMeters, StringFormat='Sondentiefe: {0:F1} m'}" FontSize="18" />
-                <Label Text="{Binding EffectiveProbeRadiusMeters, StringFormat='Sondenradius: {0:F1} m'}" FontSize="18" />
-            </StackLayout>
-            <StackLayout Orientation="Horizontal" Spacing="8" HorizontalOptions="Center">
-                <Label Text="Timer:" FontSize="24" />
-                <Label Text="{Binding TimerText}" FontSize="24" />
-                <Label Text="{Binding DistanceText}" FontSize="24" Margin="20,0,0,0" />
-            </StackLayout>
+        <!-- Kopf: Button links, Labels rechts -->
+        <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" Margin="0,20,0,0" Spacing="24">
+            <Button
+                Text="{Binding StartRunButtonText}"
+                Command="{Binding StartRunCommand}"
+                IsEnabled="{Binding IsRunNotStarted}"
+                WidthRequest="200"
+                HeightRequest="60"
+                BackgroundColor="White"
+                TextColor="Black"
+                Opacity="0.95"
+                VerticalOptions="Center"
+                Margin="0,0,12,0"
+                InputTransparent="False" />
+			<StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="24" VerticalOptions="Center">
+                    <Label Text="{Binding ProbeDepthMeters, StringFormat='Sondentiefe: {0:F1} m'}" FontSize="18" />
+                    <Label Text="{Binding EffectiveProbeRadiusMeters, StringFormat='Sondenradius: {0:F1} m'}" FontSize="18" />
+                </StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
+                    <Label Text="Timer:" FontSize="24" />
+                    <Label Text="{Binding TimerText}" FontSize="24" />
+                    <Label Text="{Binding DistanceText}" FontSize="24" Margin="20,0,0,0" />
+                </StackLayout>
+			</StackLayout>
         </StackLayout>
 
-        <!-- Linker Bereich (Canvas) -->
-        <AbsoluteLayout Grid.Row="1" Grid.Column="0" HeightRequest="1000" WidthRequest="1000">
+        <!-- Canvas und weitere Bereiche bleiben unverändert -->
+        <AbsoluteLayout Grid.Row="2" Grid.Column="0" HeightRequest="1000" WidthRequest="1000">
             <GraphicsView
                 x:Name="CanvasView"
                 HeightRequest="1000"
@@ -48,27 +62,13 @@
                     WidthRequest="120"
                     InputTransparent="True" />
             </Border>
-
-            <Button
-                Text="{Binding StartRunButtonText}"
-                IsVisible="{Binding IsRunNotStarted}"
-                Command="{Binding StartRunCommand}"
-                WidthRequest="200"
-                HeightRequest="60"
-                BackgroundColor="White"
-                TextColor="Black"
-                Opacity="0.95"
-                InputTransparent="False"
-                AbsoluteLayout.LayoutBounds="400,470,200,60"
-                AbsoluteLayout.LayoutFlags="None" />
         </AbsoluteLayout>
 
-        <!-- Rechter Bereich -->
-        <Grid Grid.Row="1" Grid.Column="1"
+        <!-- Rechter Bereich bleibt unverändert -->
+        <Grid Grid.Row="2" Grid.Column="1"
               RowDefinitions="Auto,Auto,*,Auto,Auto"
               ColumnDefinitions="Auto"
               RowSpacing="6">
-
             <!-- Name / Ton-Typ -->
             <Grid Grid.Row="0"
                   ColumnDefinitions="90,180"
@@ -163,6 +163,6 @@
             </Frame>
         </Grid>
 
-        <views:RunsCompletedDialog Grid.RowSpan="2" Grid.ColumnSpan="2" ZIndex="100" />
+        <views:RunsCompletedDialog Grid.RowSpan="3" Grid.ColumnSpan="2" ZIndex="100" />
     </Grid>
 </ContentPage>

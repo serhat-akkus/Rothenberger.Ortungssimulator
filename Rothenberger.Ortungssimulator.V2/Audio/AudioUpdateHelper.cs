@@ -183,7 +183,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     octaveOffset: 0.0,
                     updateIntervalSamples: 2048);
 
-                waveOut = new WaveOutEvent { DesiredLatency = 100 };
+                waveOut = new WaveOutEvent { DesiredLatency = 0 };
                 waveOut.Init(provider);
                 waveOut.Volume = outputVolume;
                 waveOut.Play();
