@@ -132,16 +132,24 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (!_isEingeklinkt && horiz2dMeters <= EinklinkRadiusMeters)
             {
                 _isEingeklinkt = true;
-                PlayEinklinkSound();
-                sineProvider?.SetVolume(0.0f);
+                
                 if (shepardMouseWaveOut is WaveOutEvent wo)
-                    wo.Volume = 0.0f;
+                {
+                    wo.Pause(); // Shepard-Ton wirklich pausieren
+                }
+                sineProvider?.SetVolume(0.0f);
+
+                PlayEinklinkSound();
                 return;
             }
             else if (_isEingeklinkt && horiz2dMeters > EinklinkRadiusMeters)
             {
                 _isEingeklinkt = false;
                 PlayAusklinkSound();
+                if (shepardMouseWaveOut is WaveOutEvent wo)
+                {
+                    wo.Play(); // Shepard-Ton wieder aktivieren
+                }
                 // Provider wieder aktivieren: Methode läuft weiter!
             }
 
@@ -539,7 +547,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _uiTimer = null;
         }
 
-        private void PlayEinklinkSound()
+        private async void PlayEinklinkSound()
         {
             einklinkProvider?.Play();
         }
