@@ -19,7 +19,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             if (sineProvider == null) return lastFrequency;
 
-            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
+            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
 
             // Nähe über (Radius - Distanz) / Radius, nicht über (Tiefe..Radius)-Intervall
             double proximity = (probeRadius3DMeters - d3) / Math.Max(1e-6, probeRadius3DMeters);
@@ -61,7 +61,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             if (sineProvider == null) return lastFrequency;
 
-            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
+            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
 
             double proximity = (probeRadius3DMeters - d3) / Math.Max(1e-6, probeRadius3DMeters);
             if (proximity < 0.0) proximity = 0.0;
@@ -111,7 +111,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             if (sineProvider == null) return lastFrequency;
 
-            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
+            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
 
             double proximity = (probeRadius3DMeters - d3) / Math.Max(1e-6, probeRadius3DMeters);
             if (proximity < 0.0) proximity = 0.0;

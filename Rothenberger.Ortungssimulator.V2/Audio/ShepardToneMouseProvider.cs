@@ -1,5 +1,6 @@
 ﻿using System;
 using NAudio.Wave;
+using Rothenberger.Ortungssimulator.V2.Models;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -22,12 +23,9 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly double[] _amps;
         private readonly double[] _freqs;
 
-        private readonly int _updateIntervalSamples;
         private readonly double _sensitivitySemitonesPerSecond; // Skaliert die Tonhöhenänderung je normierter T-Geschwindigkeit
 
         private double _mContinuous;
-        private int _lastCycleIndex;
-        private int _sampleCounter;
         private bool _disposed;
         private volatile bool _stopped;
 
@@ -41,42 +39,23 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private double _maxSemitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond;
         private const double MaxSemitoneVelocityPerSecond = 3.0;
 
+        /// <summary>
+        /// Shepard-Ton Provider, dessen Parameter direkt aus einem ToneType-Objekt gelesen werden.
+        /// Die Tonhöhenänderung und weitere Eigenschaften werden aus der Konfiguration des ToneType bestimmt.
+        /// </summary>
+        /// <param name="toneType">Konfigurationsobjekt mit allen relevanten Parametern für den Shepard-Ton</param>
         /// <param name="sampleRate">Samplerate</param>
-        /// <param name="mMax">Anzahl Halbtöne pro Zyklus (z.B. 12)</param>
-        /// <param name="nMax">Anzahl überlagerter Sinus-Obertöne (z.B. 12)</param>
-        /// <param name="fMin">Basisfrequenz für Index 0 (z.B. 55 Hz)</param>
-        /// <param name="sigma">Breite der Gauß-Amplitudenverteilung</param>
-        /// <param name="sensitivitySemitonesPerSecond">
-        /// Skala, wie stark die Tonhöhe je Sekunde bei maximaler normierter Annäherungs-/Entfernungs-Rate (|dt/ds|=1) verändert wird.
-        /// Beispiel: 12 -> eine Oktave pro Sekunde bei voller Annäherungsgeschwindigkeit.
-        /// </param>
-        /// <param name="maxSemitoneVelocityPerSecond">
-        /// Maximale Semitongeschwindigkeit pro Sekunde. Steuert die maximale Geschwindigkeit,
-        /// mit der die Tonhöhe verändert werden kann.
-        /// </param>
-        /// <param name="octaveOffset">Optionaler Oktavversatz</param>
         /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
-        public ShepardToneMouseProvider(
-            int sampleRate,
-            int mMax,
-            int nMax,
-            double fMin,
-            double sigma,
-            double sensitivitySemitonesPerSecond,
-            double maxSemitoneVelocityPerSecond,
-            double octaveOffset = 0.0,
-            int updateIntervalSamples = 2048)
+        public ShepardToneMouseProvider(ToneType toneType, int sampleRate, int updateIntervalSamples = 2048)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
-            _mMax = mMax;
-            _nMax = nMax;
-            _fMin = fMin;
-            _sigma = sigma;
-            _octaveOffset = octaveOffset;
-
-            _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
-            _sensitivitySemitonesPerSecond = sensitivitySemitonesPerSecond;
-            _maxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
+            _mMax = toneType.MMax ?? 12;
+            _nMax = toneType.NMax ?? 10;
+            _fMin = toneType.FMin ?? 55.0;
+            _sigma = toneType.Sigma ?? 1.0;
+            _octaveOffset = toneType.OctaveOffset ?? 0.0;
+            _sensitivitySemitonesPerSecond = toneType.SensitivitySemitonesPerSecond ?? 3.0;
+            _maxSemitoneVelocityPerSecond = toneType.MaxSemitoneVelocityPerSecond ?? MaxSemitoneVelocityPerSecond;
 
             _phases = new double[_nMax];
             _amps = new double[_nMax];
@@ -95,27 +74,16 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// <param name="probeRadius3DMeters">Radius für Normalisierung</param>
         public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
         {
-            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
-            double t = Distance3DHelper.Normalize(d3, probeDepthMeters, probeRadius3DMeters); // 0=nah, 1=fern
+            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
+            double t = Distance3DHelper.Normalize3dDistanceToProbe(d3, probeDepthMeters, probeRadius3DMeters); // 0=nah, 1=fern
 
             // Zeitdifferenz seit letztem Update
             long nowTicks = Environment.TickCount64;
-            long dtMs = nowTicks - _lastUpdateTicks;
-            if (dtMs <= 0) dtMs = 1; // Schutz gegen Division durch 0
-            double dtSec = dtMs / 1000.0;
+            double dtSec = GetElapsedSecondsSinceLastUpdate(nowTicks);
 
             // t-Geschwindigkeit: negativ bei Annäherung (t sinkt), positiv bei Entfernung (t steigt)
             double tVelocityPerSecond = (t - _lastTNormalized) / dtSec;
-
-            // Semiton-Geschwindigkeit: invertiere Vorzeichen so, dass Annäherung -> steigend (positiv)
-            // t sinkt bei Annäherung, tVelocity < 0, dadurch -tVelocity > 0 -> steigender Ton.
-
-            _semitoneVelocityPerSecond = _maxSemitoneVelocityPerSecond == 0 
-                ? -tVelocityPerSecond * _sensitivitySemitonesPerSecond 
-                : Math.Clamp(
-                    -tVelocityPerSecond * _sensitivitySemitonesPerSecond,
-                    -_maxSemitoneVelocityPerSecond,
-                    _maxSemitoneVelocityPerSecond);
+            _semitoneVelocityPerSecond = UpdateSemitoneVelocity(tVelocityPerSecond, _maxSemitoneVelocityPerSecond,_sensitivitySemitonesPerSecond);
 
             //if (t < _lastTNormalized)
             //    _semitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond; // Annäherung
@@ -127,6 +95,24 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             // Zustände aktualisieren
             _lastTNormalized = t;
             _lastUpdateTicks = nowTicks;
+        }
+
+        private static double UpdateSemitoneVelocity(double tVelocityPerSecond, double velocityCap, double sensitivitySemitonesPerSecond) =>
+            // Semiton-Geschwindigkeit: invertiere Vorzeichen so, dass Annäherung -> steigend (positiv)
+            // t sinkt bei Annäherung, tVelocity < 0, dadurch -tVelocity > 0 -> steigender Ton.
+            velocityCap == 0
+                ? -tVelocityPerSecond * sensitivitySemitonesPerSecond
+                : Math.Clamp(
+                    -tVelocityPerSecond * sensitivitySemitonesPerSecond,
+                    -velocityCap,
+                    velocityCap);
+
+        private double GetElapsedSecondsSinceLastUpdate(long nowTicks)
+        {
+            long dtMs = nowTicks - _lastUpdateTicks;
+            if (dtMs <= 0) dtMs = 1; // Schutz gegen Division durch 0
+            double dtSec = dtMs / 1000.0;
+            return dtSec;
         }
 
         public void RequestStop() => _stopped = true;
@@ -146,12 +132,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             {
                 // Tonhöhenänderung ausschließlich aus Mausbewegung
                 _mContinuous += semitonesPerSample;
-
-                int currentCycleIndex = (int)Math.Floor(_mContinuous / _mMax);
-                if (currentCycleIndex > _lastCycleIndex)
-                {
-                    _lastCycleIndex = currentCycleIndex;
-                }
 
                 double amplitudeSum = 0.0;
                 for (int n = 0; n < _nMax; n++)
@@ -186,8 +166,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     sampleValue /= amplitudeSum;
 
                 buffer[offset + s] = (float)sampleValue;
-
-                _sampleCounter++;
             }
 
             return count;

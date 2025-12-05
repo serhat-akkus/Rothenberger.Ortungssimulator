@@ -1,5 +1,6 @@
 ﻿using System;
 using NAudio.Wave;
+using Rothenberger.Ortungssimulator.V2.Models;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -33,26 +34,22 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public bool IsStopped => _stopped;
 
         public ShepardToneSweepProvider(
+            ToneType toneType,
             int sampleRate,
-            int mMax,
-            int nMax,
-            double fMin,
-            double sigma,
-            double semitonesPerSecond,
             Action<int>? cycleCallback,
             Action<double, double>? freqProgressCallback,
-            double octaveOffset = 0.0,
             int updateIntervalSamples = 2048)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
-            _mMax = mMax;
-            _nMax = nMax;
-            _fMin = fMin;
-            _sigma = sigma;
-            _octaveOffset = octaveOffset;
+            _mMax = toneType.MMax ?? 12;
+            _nMax = toneType.NMax ?? 10;
+            _fMin = toneType.FMin ?? 55.0;
+            _sigma = toneType.Sigma ?? 1.0;
+            _octaveOffset = toneType.OctaveOffset ?? 0.0;
             _cycleCallback = cycleCallback;
             _freqProgressCallback = freqProgressCallback;
             _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
+            double semitonesPerSecond = toneType.SensitivitySemitonesPerSecond ?? 3.0;
             _semitonesPerSample = semitonesPerSecond / sampleRate;
 
             _phases = new double[_nMax];
@@ -63,8 +60,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         // Aufruf bei Mausbewegung: setzt nur Distanzzustand
         public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
         {
-            double d3 = Distance3DHelper.Compute3D(horiz2dMeters, probeDepthMeters);
-            double t  = Distance3DHelper.Normalize(d3, probeDepthMeters, probeRadius3DMeters);
+            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
+            double t  = Distance3DHelper.Normalize3dDistanceToProbe(d3, probeDepthMeters, probeRadius3DMeters);
             _currentD3Meters = d3;
             _currentTNormalized = t;
         }
