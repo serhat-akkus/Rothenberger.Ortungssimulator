@@ -495,6 +495,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             // Halbtöne pro Meter, damit auf shepardRadius genau desiredCycles Zyklen durchlaufen werden:
             double semitonesPerMeter = (desiredCycles * mMax) / shepardRadius;
 
+            double maxSemitoneVelocityPerSecond = selectedToneType.MaxSemitoneVelocityPerSecond ?? 0.0;
+
             shepardMouseProvider?.Dispose();
             shepardMouseWaveOut?.Dispose();
 
@@ -506,6 +508,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 sigma: sigma,
                 sensitivitySemitonesPerSecond: semitonesPerMeter,
                 octaveOffset: 0.0,
+                maxSemitoneVelocityPerSecond: maxSemitoneVelocityPerSecond,
                 updateIntervalSamples: 2048);
 
             shepardMouseWaveOut = new WaveOutEvent { DesiredLatency = 100 };

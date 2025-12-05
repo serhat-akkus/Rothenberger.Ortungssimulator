@@ -38,6 +38,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
+        private double _maxSemitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond;
+        private const double MaxSemitoneVelocityPerSecond = 3.0;
 
         /// <param name="sampleRate">Samplerate</param>
         /// <param name="mMax">Anzahl Halbtöne pro Zyklus (z.B. 12)</param>
@@ -48,6 +50,10 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// Skala, wie stark die Tonhöhe je Sekunde bei maximaler normierter Annäherungs-/Entfernungs-Rate (|dt/ds|=1) verändert wird.
         /// Beispiel: 12 -> eine Oktave pro Sekunde bei voller Annäherungsgeschwindigkeit.
         /// </param>
+        /// <param name="maxSemitoneVelocityPerSecond">
+        /// Maximale Semitongeschwindigkeit pro Sekunde. Steuert die maximale Geschwindigkeit,
+        /// mit der die Tonhöhe verändert werden kann.
+        /// </param>
         /// <param name="octaveOffset">Optionaler Oktavversatz</param>
         /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
         public ShepardToneMouseProvider(
@@ -57,6 +63,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             double fMin,
             double sigma,
             double sensitivitySemitonesPerSecond,
+            double maxSemitoneVelocityPerSecond,
             double octaveOffset = 0.0,
             int updateIntervalSamples = 2048)
         {
@@ -69,6 +76,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
             _sensitivitySemitonesPerSecond = sensitivitySemitonesPerSecond;
+            _maxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
 
             _phases = new double[_nMax];
             _amps = new double[_nMax];
@@ -101,7 +109,20 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             // Semiton-Geschwindigkeit: invertiere Vorzeichen so, dass Annäherung -> steigend (positiv)
             // t sinkt bei Annäherung, tVelocity < 0, dadurch -tVelocity > 0 -> steigender Ton.
-            _semitoneVelocityPerSecond = -tVelocityPerSecond * _sensitivitySemitonesPerSecond;
+
+            _semitoneVelocityPerSecond = _maxSemitoneVelocityPerSecond == 0 
+                ? -tVelocityPerSecond * _sensitivitySemitonesPerSecond 
+                : Math.Clamp(
+                    -tVelocityPerSecond * _sensitivitySemitonesPerSecond,
+                    -_maxSemitoneVelocityPerSecond,
+                    _maxSemitoneVelocityPerSecond);
+
+            //if (t < _lastTNormalized)
+            //    _semitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond; // Annäherung
+            //else if (t > _lastTNormalized)
+            //    _semitoneVelocityPerSecond = -MaxSemitoneVelocityPerSecond; // Entfernung
+            //else
+            //    _semitoneVelocityPerSecond = 0; // Stillstand
 
             // Zustände aktualisieren
             _lastTNormalized = t;

@@ -56,7 +56,8 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "Type": "shepard"
+    "Type": "shepard",
+    "MaxSemitoneVelocityPerSecond":  3.0
   },
   {
     "Id": "shepard2",
@@ -68,7 +69,8 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "Type": "shepard"
+    "Type": "shepard",
+    "MaxSemitoneVelocityPerSecond": 3.0
   },
   {
     "Id": "shepard3",
@@ -80,7 +82,8 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "Type": "shepard"
+    "Type": "shepard",
+    "MaxSemitoneVelocityPerSecond": 3.0
   },
   {
     "Id": "shepard4",
@@ -92,7 +95,8 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 1,
-    "Type": "shepard"
+    "Type": "shepard",
+    "MaxSemitoneVelocityPerSecond": 3.0
   },
   {
     "Id": "shepard5",
@@ -103,7 +107,8 @@
     "Sigma": 1,
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
-    "ShepardCyclesFromEdgeToProbe": 3,
-    "Type": "shepard"
+    "ShepardCyclesFromEdgeToProbe": 12,
+    "Type": "shepard",
+    "MaxSemitoneVelocityPerSecond": 6.0
   }
 ]

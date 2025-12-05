@@ -18,6 +18,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public double? SensitivitySemitonesPerSecond { get; set; }
         public double? OctaveOffset { get; set; }
         public double? ShepardCyclesFromEdgeToProbe { get; set; }
+        public double? MaxSemitoneVelocityPerSecond { get; set; }
 
         // NEU: Type-Property
         public string Type { get; set; }
@@ -38,7 +39,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             double? sensitivitySemitonesPerSecond = null,
             double? octaveOffset = null,
             double? shepardCyclesFromEdgeToProbe = null,
-            string type = null)
+            string type = null,
+            double? maxSemitoneVelocityPerSecond = null)
         {
             Id = id;
             Name = name;
@@ -54,6 +56,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             OctaveOffset = octaveOffset;
             ShepardCyclesFromEdgeToProbe = shepardCyclesFromEdgeToProbe;
             Type = type ?? id;
+            MaxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
         }
+
     }
 }
