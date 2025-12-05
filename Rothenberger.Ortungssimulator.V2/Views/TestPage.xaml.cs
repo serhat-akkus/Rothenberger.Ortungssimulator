@@ -13,6 +13,13 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             BindingContext = _viewModel;
             CanvasView.StartInteraction += CanvasView_StartInteraction;
             CanvasView.MoveHoverInteraction += CanvasView_MoveHoverInteraction;
+            CanvasView.EndHoverInteraction += (s, e) =>
+            {
+                System.Diagnostics.Debug.WriteLine("Maus hat das Canvas verlassen.");
+                _viewModel.CurrentMousePosition = new Point(-1, -1);
+                _viewModel.UpdateAudioForMousePosition(false);
+            };
+
             CanvasView.Drawable = new TestPageDrawable(this);
             ArrowView.Drawable = new ArrowBoxDrawable(_viewModel);
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
@@ -21,14 +28,14 @@ namespace Rothenberger.Ortungssimulator.V2.Views
             // PointerExited existiert nicht, daher MoveHoverInteraction für das Mouse-Leave-Handling verwenden.
             CanvasView.MoveHoverInteraction += (s, e) =>
             {
-                // Prüfe, ob die Maus außerhalb des Canvas ist (z.B. X oder Y < 0 oder > Canvasgröße)
                 var point = e.Touches.First();
                 bool isInCanvas = point.X >= 0 && point.Y >= 0 && point.X < CanvasView.Width && point.Y < CanvasView.Height;
-                // Beispiel: Setze die Mausposition auf (-1, -1), wenn außerhalb (hier nur als Platzhalter)
                 if (!isInCanvas)
                 {
                     _viewModel.CurrentMousePosition = new Point(-1, -1);
-                    _viewModel.UpdateAudioForMousePosition();
+                    bool mouseOverCanvas = _viewModel.IsMouseOverCanvas(point, CanvasView.X, CanvasView.Y, CanvasView.Width, CanvasView.Height);
+                    System.Diagnostics.Debug.WriteLine($"mouseOverCanvas: {mouseOverCanvas}");
+                    _viewModel.UpdateAudioForMousePosition(mouseOverCanvas);
                 }
             };
         }
@@ -52,13 +59,11 @@ namespace Rothenberger.Ortungssimulator.V2.Views
         private void CanvasView_MoveHoverInteraction(object sender, TouchEventArgs e)
         {
             var point = e.Touches.First();
-
-            // Keine Änderung der Sondenposition beim Hover/Move
             _viewModel.CurrentMousePosition = point;
 
             if (!_viewModel.IsRunNotStarted)
             {
-                _viewModel.UpdateAudioForMousePosition();
+                _viewModel.UpdateAudioForMousePosition(true);
             }
 
             _viewModel.UpdateArrowToProbe();

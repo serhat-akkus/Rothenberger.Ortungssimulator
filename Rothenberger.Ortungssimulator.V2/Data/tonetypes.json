@@ -4,7 +4,8 @@
     "Name": "Sinus - linear",
     "MinFrequency": 130,
     "MaxFrequency": 1400,
-    "Type": "sinus_linear"
+    "Type": "sinus_linear",
+    "Debug": false
   },
   {
     "Id": "sinus_log",
@@ -12,7 +13,8 @@
     "MinFrequency": 130,
     "MaxFrequency": 1400,
     "LogBase": "e",
-    "Type": "sinus_log"
+    "Type": "sinus_log",
+    "Debug": false
   },
   {
     "Id": "tonleiter_diskret",
@@ -44,7 +46,8 @@
       146.832,
       130.813
     ],
-    "Type": "tonleiter_diskret"
+    "Type": "tonleiter_diskret",
+    "Debug": false
   },
   {
     "Id": "shepard",
@@ -57,7 +60,8 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond":  3.0
+    "MaxSemitoneVelocityPerSecond":  3.0,
+    "Debug": true
   },
   {
     "Id": "shepard2",
@@ -70,7 +74,8 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond": 3.0
+    "MaxSemitoneVelocityPerSecond": 3.0,
+    "Debug": true
   },
   {
     "Id": "shepard3",
@@ -83,7 +88,8 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond": 3.0
+    "MaxSemitoneVelocityPerSecond": 3.0,
+    "Debug": true
   },
   {
     "Id": "shepard4",
@@ -96,7 +102,8 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 1,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond": 3.0
+    "MaxSemitoneVelocityPerSecond": 3.0,
+    "Debug": true
   },
   {
     "Id": "shepard5",
@@ -109,6 +116,7 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 12,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond": 1.5
+    "MaxSemitoneVelocityPerSecond": 1.5,
+    "Debug": true
   }
 ]

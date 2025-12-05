@@ -23,6 +23,9 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         // NEU: Type-Property
         public string Type { get; set; }
 
+        // NEU: Debug-Flag
+        public bool Debug { get; set; }
+
         // Optional: Automatisch setzen, falls Type nicht im JSON vorhanden ist
         [JsonConstructor]
         public ToneType(
@@ -40,7 +43,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             double? octaveOffset = null,
             double? shepardCyclesFromEdgeToProbe = null,
             string type = null,
-            double? maxSemitoneVelocityPerSecond = null)
+            double? maxSemitoneVelocityPerSecond = null,
+            bool debug = false)
         {
             Id = id;
             Name = name;
@@ -57,6 +61,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             ShepardCyclesFromEdgeToProbe = shepardCyclesFromEdgeToProbe;
             Type = type ?? id;
             MaxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
+            Debug = debug;
         }
 
     }

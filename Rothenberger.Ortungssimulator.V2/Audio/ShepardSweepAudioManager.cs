@@ -1,7 +1,5 @@
 ﻿using NAudio.Wave;
-using Rothenberger.Ortungssimulator.V2.Audio;
 using Rothenberger.Ortungssimulator.V2.Models;
-using System;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
