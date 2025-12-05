@@ -72,27 +72,19 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// <param name="horiz2dMeters">Horizontale 2D-Distanz Maus->Sonde</param>
         /// <param name="probeDepthMeters">Sondentiefe</param>
         /// <param name="probeRadius3DMeters">Radius für Normalisierung</param>
-        public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
+        public void UpdateDistance3DState(double normalizedDistance3d)
         {
-            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
-            double t = Distance3DHelper.Normalize3dDistanceToProbe(d3, probeDepthMeters, probeRadius3DMeters); // 0=nah, 1=fern
+            // Invertiere den Wert, damit Annäherung (Maus näher an Sonde) zu steigendem Ton führt
+            double t = 1.0 - normalizedDistance3d;
 
-            // Zeitdifferenz seit letztem Update
             long nowTicks = Environment.TickCount64;
             double dtSec = GetElapsedSecondsSinceLastUpdate(nowTicks);
 
-            // t-Geschwindigkeit: negativ bei Annäherung (t sinkt), positiv bei Entfernung (t steigt)
+            System.Diagnostics.Debug.WriteLine($"[ShepardToneMouseProvider] normalizedDistance3d (inverted): {t:F4}");
+
             double tVelocityPerSecond = (t - _lastTNormalized) / dtSec;
-            _semitoneVelocityPerSecond = UpdateSemitoneVelocity(tVelocityPerSecond, _maxSemitoneVelocityPerSecond,_sensitivitySemitonesPerSecond);
+            _semitoneVelocityPerSecond = UpdateSemitoneVelocity(tVelocityPerSecond, _maxSemitoneVelocityPerSecond, _sensitivitySemitonesPerSecond);
 
-            //if (t < _lastTNormalized)
-            //    _semitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond; // Annäherung
-            //else if (t > _lastTNormalized)
-            //    _semitoneVelocityPerSecond = -MaxSemitoneVelocityPerSecond; // Entfernung
-            //else
-            //    _semitoneVelocityPerSecond = 0; // Stillstand
-
-            // Zustände aktualisieren
             _lastTNormalized = t;
             _lastUpdateTicks = nowTicks;
         }

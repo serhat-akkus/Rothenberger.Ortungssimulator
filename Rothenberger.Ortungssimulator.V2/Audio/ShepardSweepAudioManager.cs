@@ -40,11 +40,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _provider.UpdateDistance3DState(horiz2dMeters, probeDepthMeters, probeRadiusMeters);
         }
 
-        public void UpdateDistance(double horiz2dMeters, double probeDepthMeters, double probeRadiusMeters)
-        {
-            _provider?.UpdateDistance3DState(horiz2dMeters, probeDepthMeters, probeRadiusMeters);
-        }
-
         public void Stop()
         {
             _provider?.RequestStop();

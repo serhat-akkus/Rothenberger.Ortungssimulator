@@ -25,7 +25,7 @@ namespace Rothenberger.Ortungssimulator.V2.Views
                         var fillColor = Colors.Blue.WithAlpha(0.25f);
                         var strokeColor = Colors.Blue.WithAlpha(0.6f);
                         var strokeSize = 2f;
-                        canvas.DrawProbeRadius(vm.ProbePosition, vm.ProbeRadiusPixels, fillColor, strokeColor, strokeSize);
+                        canvas.DrawProbeRadius(vm.ProbePosition, vm.ProbeRadiusPixelsIn2d, fillColor, strokeColor, strokeSize);
                     }
                 }
 

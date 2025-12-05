@@ -61,7 +61,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
         {
             double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
-            double t  = Distance3DHelper.Normalize3dDistanceToProbe(d3, probeDepthMeters, probeRadius3DMeters);
+            double t  = Distance3DHelper.CalculateProximity3D(probeRadius3DMeters, 3d);
             _currentD3Meters = d3;
             _currentTNormalized = t;
         }

@@ -109,6 +109,6 @@
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 12,
     "Type": "shepard",
-    "MaxSemitoneVelocityPerSecond": 6.0
+    "MaxSemitoneVelocityPerSecond": 1.5
   }
 ]
