@@ -112,6 +112,13 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
         public void RequestStop() => _stopped = true;
 
+        private double _lastBaseFreq = 0.0;
+
+        public double GetCurrentBaseFrequency()
+        {
+            return _lastBaseFreq;
+        }
+
         public int Read(float[] buffer, int offset, int count)
         {
             if (_disposed || _stopped)
@@ -156,6 +163,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     {
                         baseEffectiveIndex = effectiveIndex - Math.Floor(effectiveIndex);
                         baseFreq = _fMin * Math.Pow(2.0, baseEffectiveIndex);
+                        _lastBaseFreq = baseFreq;
                     }
                 }
 

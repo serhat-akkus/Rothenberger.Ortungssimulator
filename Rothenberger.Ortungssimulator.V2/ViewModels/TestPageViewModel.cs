@@ -86,6 +86,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private SineWaveAudioManager? sineAudioManager;
         private ShepardMouseAudioManager? shepardMouseAudioManager;
         private ShepardSweepAudioManager? _shepardSweepAudioManager;
+        private ShepardDiscreteAudioManager? shepardDiscreteAudioManager;
 
         private bool _isEingeklinkt = false;
 
@@ -153,6 +154,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 beepAudioService.Pause();
                 sineAudioManager?.Pause();
                 shepardMouseAudioManager?.Pause();
+                shepardDiscreteAudioManager?.Pause();
+
                 return;
             }
 
@@ -165,6 +168,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 beepAudioService.Play();
                 sineAudioManager?.Pause();
                 shepardMouseAudioManager?.Pause();
+                shepardDiscreteAudioManager?.Pause();
                 return;
             }
             else
@@ -191,23 +195,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             bool isInRadius3d = distance3dMouseToProbe <= _canvas.ProbeRadiusMeters;
             double normalizedDistance3d = Distance3DHelper.CalculateProximity3D(ProbeRadius3d, distance3dMouseToProbe);
 
-            if (toneId == "shepard")
-            {
-                // Shepard-Ton nur innerhalb des 2D-Radius erzeugen!
-                if (isInRadius3d)
-                {
-                    shepardMouseAudioManager?.UpdateDistance3DState(normalizedDistance3d);
-                    shepardMouseAudioManager?.Play();
-                }
-                else
-                {
-                    shepardMouseAudioManager?.Pause();
-                }
-
-                lastFrequency = 0.0;
-                return;
-            }
-
             if (isInRadius3d)
             {
                 lastFrequency = toneId switch
@@ -215,15 +202,42 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                     "sinus_linear" => AudioUpdateHelper.HandleSinusLinear3D(sineAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters, lastFrequency),
                     "sinus_log" => AudioUpdateHelper.HandleSinusLog3D(sineAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters, lastFrequency),
                     "tonleiter_diskret" => AudioUpdateHelper.HandleTonleiterDiskret3D(sineAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters, lastFrequency),
+                    "shepard" => AudioUpdateHelper.HandleShepardMouse3D(shepardMouseAudioManager, normalizedDistance3d),
+                    "shepard_tonleiter" => HandleShepardTonleiter(distance3dMouseToProbe, _canvas.ProbeRadiusMeters),
                     _ => AudioUpdateHelper.HandleDefault(sineAudioManager?.Provider),
                 };
 
                 CurrentFrequency = lastFrequency ?? 0.0;
-                sineAudioManager?.Play();
+                CurrentShepardMouseFrequency = lastFrequency ?? 0.0;
+
+                switch (toneId)
+                {
+                    case "shepard":
+                        shepardMouseAudioManager?.Play();
+                        break;
+                    case "shepard_tonleiter":
+                        shepardDiscreteAudioManager?.Play();
+                        break;
+                    default:
+                        sineAudioManager?.Play();
+                        break;
+                }
             }
             else
             {
-                sineAudioManager?.Pause();
+                switch (toneId)
+                {
+                    case "shepard":
+                        shepardMouseAudioManager?.Pause();
+                        break;
+                    case "shepard_tonleiter":
+                        shepardDiscreteAudioManager?.Pause();
+                        break;
+                    default:
+                        sineAudioManager?.Pause();
+                        break;
+                }
+
                 CurrentFrequency = 0.0;
             }
         }
@@ -296,6 +310,15 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 InitializeShepardMouseAudio();
                 isAudioActive = true;
                 lastFrequency = 0.0; // Shepard wird über Progress angezeigt
+            }
+            else if (toneId == "shepard_tonleiter")
+            {
+                // Diskrete Shepard-Tonleiter
+                StopAudio();
+                shepardDiscreteAudioManager = new ShepardDiscreteAudioManager(selectedToneType, SampleRate, VOLUME);
+                shepardDiscreteAudioManager.Initialize();
+                isAudioActive = true;
+                lastFrequency = 0.0;
             }
             else
             {
@@ -391,6 +414,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             shepardMouseAudioManager?.Dispose();
             shepardMouseAudioManager = null;
 
+            shepardDiscreteAudioManager?.Stop();
+            shepardDiscreteAudioManager?.Dispose();
+            shepardDiscreteAudioManager = null;
+
             // optional: auch den Shepard-Sweep stoppen, falls aktiv
             StopShepardSweepProvider();
         }
@@ -465,6 +492,27 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _anyAudioActive = true;
         }
 
+        private double HandleShepardTonleiter(double distance3dMouseToProbe, double probeRadius)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShepardTonleiter] distance3dMouseToProbe: {distance3dMouseToProbe:F2}");
+            // Zyklus-Konfiguration aus ToneType lesen
+            int cycles = (int)(selectedToneType.ShepardCyclesFromEdgeToProbe ?? 1);
+            int stepsPerCycle = 25;
+            int steps = stepsPerCycle * cycles;
+            int mMax = selectedToneType.MMax ?? 12;
+            double t = Math.Clamp(distance3dMouseToProbe / probeRadius, 0.0, 1.0);
+            double totalSteps = stepsPerCycle * cycles;
+            double step = (1.0 - t) * totalSteps;
+            double octaveProgress = step / stepsPerCycle; // 0..cycles
+            double mFloat = octaveProgress * mMax; // 0..(cycles*mMax)
+            int m = (int)Math.Round(mFloat) % mMax + 1;
+            shepardDiscreteAudioManager.SetCurrentStep(m);
+
+            // Frequenz des aktuellen diskreten Tons (Basisfrequenz)
+            double freq = selectedToneType.FMin ?? 55.0;
+            freq = freq * Math.Pow(2.0, ((m - 1) / (double)mMax));
+            return freq;
+        }
         public bool CanStartShepard => IsRunNotStarted; // oder ein eigener Zustand
 
         private bool _disposed;

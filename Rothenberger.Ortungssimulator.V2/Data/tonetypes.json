@@ -118,5 +118,17 @@
     "Type": "shepard",
     "MaxSemitoneVelocityPerSecond": 0,
     "Debug": true
+  },
+  {
+    "Id": "shepard_tonleiter",
+    "Name": "Shepard-Tonleiter (diskret)",
+    "Type": "shepard_tonleiter",
+    "FMin": 55.0,
+    "MMax": 12,
+    "NMax": 10,
+    "LMin": 0.1,
+    "LMax": 1.0,
+    "ShepardCyclesFromEdgeToProbe": 3,
+    "Debug": true
   }
 ]

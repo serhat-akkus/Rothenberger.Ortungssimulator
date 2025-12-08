@@ -127,5 +127,13 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             sineProvider?.SetVolume(0.0f);
             return null;
         }
+
+        public static double HandleShepardMouse3D(ShepardMouseAudioManager? shepardMouseAudioManager, double normalizedDistance3d)
+        {
+            if (shepardMouseAudioManager == null)
+                return 0.0;
+            shepardMouseAudioManager.UpdateDistance3DState(normalizedDistance3d);
+            return shepardMouseAudioManager.Provider?.GetCurrentBaseFrequency() ?? 0.0;
+        }
     }
 }
