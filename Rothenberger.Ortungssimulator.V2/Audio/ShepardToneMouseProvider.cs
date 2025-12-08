@@ -24,8 +24,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly double[] _freqs;
 
         private readonly double _sensitivitySemitonesPerSecond; // Skaliert die Tonhöhenänderung je normierter T-Geschwindigkeit
+        private readonly double _shepardCyclesFromEdgeToProbe;
 
-        private double _mContinuous;
         private bool _disposed;
         private volatile bool _stopped;
 
@@ -40,6 +40,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public bool IsStopped => _stopped;
         private double _maxSemitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond;
         private const double MaxSemitoneVelocityPerSecond = 3.0;
+        private double _currentTNormalized = 0.5;
 
         /// <summary>
         /// Shepard-Ton Provider, dessen Parameter direkt aus einem ToneType-Objekt gelesen werden.
@@ -58,6 +59,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _octaveOffset = toneType.OctaveOffset ?? 0.0;
             _sensitivitySemitonesPerSecond = toneType.SensitivitySemitonesPerSecond ?? 3.0;
             _maxSemitoneVelocityPerSecond = toneType.MaxSemitoneVelocityPerSecond ?? MaxSemitoneVelocityPerSecond;
+            _shepardCyclesFromEdgeToProbe = toneType.ShepardCyclesFromEdgeToProbe ?? 1.0;
 
             _phases = new double[_nMax];
             _amps = new double[_nMax];
@@ -65,6 +67,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             _lastUpdateTicks = Environment.TickCount64;
             _lastTNormalized = 0.5; // Neutraler Start
+            _currentTNormalized = 0.5; // 0 = Zentrum, 1 = Rand
             _frequencyChangedCallback = frequencyChangedCallback;
         }
 
@@ -79,6 +82,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             // Invertiere den Wert, damit Annäherung (Maus näher an Sonde) zu steigendem Ton führt
             double t = 1.0 - normalizedDistance3d;
+            _currentTNormalized = t; // Speichere aktuelle Position
 
             long nowTicks = Environment.TickCount64;
             double dtSec = GetElapsedSecondsSinceLastUpdate(nowTicks);
@@ -86,7 +90,12 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             System.Diagnostics.Debug.WriteLine($"[ShepardToneMouseProvider] normalizedDistance3d (inverted): {t:F4}");
 
             double tVelocityPerSecond = (t - _lastTNormalized) / dtSec;
-            _semitoneVelocityPerSecond = UpdateSemitoneVelocity(tVelocityPerSecond, _maxSemitoneVelocityPerSecond, _sensitivitySemitonesPerSecond);
+            // Skaliere die Semiton-Geschwindigkeit so, dass die gewünschte Anzahl Zyklen abgespielt wird
+            double semitonesPerSecond = _shepardCyclesFromEdgeToProbe * _mMax * tVelocityPerSecond;
+            // Optional: Begrenzung wie bisher
+            if (_maxSemitoneVelocityPerSecond > 0)
+                semitonesPerSecond = Math.Clamp(semitonesPerSecond, -_maxSemitoneVelocityPerSecond, _maxSemitoneVelocityPerSecond);
+            _semitoneVelocityPerSecond = semitonesPerSecond;
 
             _lastTNormalized = t;
             _lastUpdateTicks = nowTicks;
@@ -128,19 +137,21 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             }
 
             double center = (_nMax - 1) / 2.0;
-            double semitonesPerSample = _semitoneVelocityPerSecond / _waveFormat.SampleRate;
+            // Absolutes Mapping: mContinuous wird direkt aus t berechnet
+            double mContinuousAbs = _shepardCyclesFromEdgeToProbe * _mMax * (1.0 - _currentTNormalized); // 0 = Rand, max = Zentrum
             double lastFreq = 0.0;
             double baseFreq = 0.0;
             double baseEffectiveIndex = 0.0;
 
             for (int s = 0; s < count; s++)
             {
-                _mContinuous += semitonesPerSample;
+                // Kein inkrementelles Update mehr, sondern immer absolut:
+                double mContinuous = mContinuousAbs;
 
                 double amplitudeSum = 0.0;
                 for (int n = 0; n < _nMax; n++)
                 {
-                    double compositeIndex = n + _mContinuous / _mMax;
+                    double compositeIndex = n + mContinuous / _mMax;
 
                     int octaveWraps = (int)Math.Floor(compositeIndex / _nMax);
                     double effectiveIndex = compositeIndex - octaveWraps * _nMax;
