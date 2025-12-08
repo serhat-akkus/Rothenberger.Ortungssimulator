@@ -54,7 +54,7 @@
   },
   {
     "Id": "shepard",
-    "Name": "Shepard (N=10;M=12)",
+    "Name": "Shepard (N=10|M=12)",
     "MMax": 12,
     "NMax": 10,
     "FMin": 55.0,
@@ -65,11 +65,12 @@
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 200
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard2",
-    "Name": "Shepard (N=10;M=12;Offset=1)",
+    "Name": "Shepard (N=10|M=12|Offset=1)",
     "MMax": 12,
     "NMax": 10,
     "FMin": 55.0,
@@ -80,11 +81,12 @@
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard3",
-    "Name": "Shepard (N=10;M=12;Sigma=0.8)",
+    "Name": "Shepard (N=10|M=12|Sigma=0.8)",
     "MMax": 12,
     "NMax": 10,
     "FMin": 55.0,
@@ -95,11 +97,12 @@
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard4",
-    "Name": "Shepard (N=10;M=12;Sigma=0.8;Cycles=1)",
+    "Name": "Shepard (N=10|M=12|Sigma=0.8|Cycles=1)",
     "MMax": 12,
     "NMax": 10,
     "FMin": 55.0,
@@ -110,11 +113,12 @@
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard5",
-    "Name": "Shepard (N=6;M=12)",
+    "Name": "Shepard (N=6|M=12)",
     "MMax": 12,
     "NMax": 6,
     "FMin": 55.0,
@@ -125,11 +129,12 @@
     "SmoothingFactor": 0,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard6",
-    "Name": "Shepard (N=6;M=12; Smoothing=0.1)",
+    "Name": "Shepard (N=6|M=12| Smoothing=0.1)",
     "MMax": 12,
     "NMax": 6,
     "FMin": 55.0,
@@ -140,11 +145,12 @@
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard7",
-    "Name": "Shepard (N=6;M=12; Smoothing=0.05)",
+    "Name": "Shepard (N=6|M=12| Smoothing=0.05)",
     "MMax": 12,
     "NMax": 6,
     "FMin": 55.0,
@@ -155,11 +161,12 @@
     "SmoothingFactor": 0.05,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard8",
-    "Name": "Shepard (N=6;M=12; Smoothing=0.01)",
+    "Name": "Shepard (N=6|M=12| Smoothing=0.01)",
     "MMax": 12,
     "NMax": 6,
     "FMin": 55.0,
@@ -170,7 +177,8 @@
     "SmoothingFactor": 0.01,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   },
   {
     "Id": "shepard_tonleiter",
@@ -184,6 +192,7 @@
     "ShepardCyclesFromEdgeToProbe": 3,
     "SmoothingFactor": 0.1,
     "Debug": true,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "UpdateIntervalSamples": 256
   }
 ]

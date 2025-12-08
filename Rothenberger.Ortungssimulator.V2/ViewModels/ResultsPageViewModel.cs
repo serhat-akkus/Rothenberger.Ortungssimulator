@@ -32,19 +32,24 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             SaveAndContinueCommand = new RelayCommand(SaveAndContinue);
         }
 
+        private static string CleanCsvField(string value)
+        {
+            return value?.Replace(",", " ").Replace(";", " ") ?? string.Empty;
+        }
+
         private async void SaveAndContinue()
         {
             var now = DateTime.Now;
             var date = now.ToString("yyMMdd", CultureInfo.InvariantCulture);
             var time = now.ToString("HHmmss", CultureInfo.InvariantCulture);
             var arrowStr = ArrowEnabled ? "ja" : "nein";
-            var fileName = $"{date}_{time}_{UserName}_{ToneType}_Hilfspfeil_{arrowStr}.csv";
+            var fileName = $"{date}_{time}_{CleanCsvField(UserName)}_{CleanCsvField(ToneType)}_Hilfspfeil_{arrowStr}.csv";
 
             // Header ergänzen
             const string header = "Name;Ton-Typ;Zeitstempel;Dauer;Distanz(m);Hilfspfeil";
 
             var csvLines = RunResults.Select(r =>
-                $"{r.Name};{r.ToneType};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
+                $"{CleanCsvField(r.Name)};{CleanCsvField(r.ToneType)};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
 
             var csv = header + Environment.NewLine + string.Join(Environment.NewLine, csvLines);
 

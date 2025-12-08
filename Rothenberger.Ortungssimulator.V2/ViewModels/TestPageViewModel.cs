@@ -147,6 +147,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             IsArrowBoxVisible = isMouseOverCanvas;
 
+            if (!isMouseOverCanvas)
+            {
+                beepAudioService?.Pause();
+                sineAudioManager?.Pause();
+                shepardMouseAudioManager?.Pause();
+                shepardDiscreteAudioManager?.Pause();
+
+                return;
+            }
+
             double horiz2dMeters = Distance3DHelper.CalculateDistanceMeters(ProbePosition, CurrentMousePosition, MeterPerPixel);
             bool isInRadius = horiz2dMeters <= ProbeRadiusMetersIn2d;
 

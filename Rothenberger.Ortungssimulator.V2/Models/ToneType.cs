@@ -24,6 +24,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public double? LMax { get; set; }
         public int? LatencyInMs { get; set; } // <--- NEU
         public double? SmoothingFactor { get; set; } // <--- NEU
+        public int? UpdateIntervalSamples { get; set; } // <--- NEU
 
         [JsonConstructor]
         public ToneType(
@@ -45,7 +46,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             double? lMin = null,
             double? lMax = null,
             int? latencyInMs = null, // <--- NEU
-            double? smoothingFactor = null // <--- NEU
+            double? smoothingFactor = null, // <--- NEU
+            int? updateIntervalSamples = null // <--- NEU
         )
         {
             Id = id;
@@ -67,6 +69,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             LMax = lMax;
             LatencyInMs = latencyInMs; // <--- NEU
             SmoothingFactor = smoothingFactor; // <--- NEU
+            UpdateIntervalSamples = updateIntervalSamples; // <--- NEU
         }
     }
 }
