@@ -125,6 +125,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ToneTypeDisplay = selectedToneType?.Name ?? "";
 
             einklinkAudioManager = new EinklinkAudioManager();
+            beepAudioService = new BeepAudioService();
         }
 
         public bool IsMouseOverCanvas(Point mousePosition, double canvasX, double canvasY, double canvasWidth, double canvasHeight)
@@ -146,26 +147,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             IsArrowBoxVisible = isMouseOverCanvas;
 
-            if (beepAudioService == null)
-                beepAudioService = new BeepAudioService();
-
-            if (!isMouseOverCanvas)
-            {
-                beepAudioService.Pause();
-                sineAudioManager?.Pause();
-                shepardMouseAudioManager?.Pause();
-                shepardDiscreteAudioManager?.Pause();
-
-                return;
-            }
-
             double horiz2dMeters = Distance3DHelper.CalculateDistanceMeters(ProbePosition, CurrentMousePosition, MeterPerPixel);
             bool isInRadius = horiz2dMeters <= ProbeRadiusMetersIn2d;
 
             // Beep nur außerhalb des Sondenradius und im Canvas
             if (!isInRadius)
             {
-                beepAudioService.Play();
+                beepAudioService?.Play();
                 sineAudioManager?.Pause();
                 shepardMouseAudioManager?.Pause();
                 shepardDiscreteAudioManager?.Pause();
@@ -173,7 +161,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
             else
             {
-                beepAudioService.Pause();
+                beepAudioService?.Pause();
             }
 
             // --- EINKLINK-LOGIK --- (MUSS VOR ALLEM ANDEREN STEHEN!)

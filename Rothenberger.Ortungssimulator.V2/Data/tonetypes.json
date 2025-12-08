@@ -60,12 +60,12 @@
     "FMin": 55.0,
     "Sigma": 1,
     "SensitivitySemitonesPerSecond": 3.0,
-    "OctaveOffset": -2,
+    "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 2,
     "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 50
+    "LatencyInMs": 200
   },
   {
     "Id": "shepard2",
