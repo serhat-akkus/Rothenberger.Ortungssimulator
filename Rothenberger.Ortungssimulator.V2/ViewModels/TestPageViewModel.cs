@@ -33,13 +33,16 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private double currentShepardFrequency;
         [ObservableProperty] private double shepardProgress;
         [ObservableProperty] private double currentFrequency;
+        [ObservableProperty] private double currentShepardMouseFrequency;
 
         public ObservableCollection<TestRunResult> RunResults { get; } = new();
 
         private const float VOLUME = 0.5f;
         private const double MeterPerPixel = 0.01;
         private const double ProbeRadius3d = 5.0;
-        private const double MaxDepthMeters = 3.0;
+        //private const int UpdateIntervalSamples = 2048;
+        private const int UpdateIntervalSamples = 256;
+        private const int SampleRate = 44100;
         private int currentRun = 1;
         private int totalRuns = 3;
         private DateTime runStartTime;
@@ -61,7 +64,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public ICommand PlayShepardSweepProviderCommand { get; }
         public ICommand StopShepardSweepProviderCommand { get; }
 
-        public ToneType SelectedToneType { get; private set; }
+        public ToneType SelectedToneType
+        {
+            get => selectedToneType;
+            set
+            {
+                if (SetProperty(ref selectedToneType, value))
+                {
+                    OnPropertyChanged(nameof(IsDebugToneType));
+                }
+            }
+        }
+
+        public bool IsDebugToneType => SelectedToneType?.Debug == true;
 
         private readonly Graphics.CanvasHelper _canvas = new Graphics.CanvasHelper();
         private readonly ArrowHelper _arrowHelper = new ArrowHelper();
@@ -98,7 +113,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             userName = name;
             SelectedToneType = selectedToneType;
-            this.selectedToneType = selectedToneType;
             totalRuns = runCount;
             arrowEnabled = arrow;
             IsProberadiusEnabled = showProbeRadius;
@@ -396,6 +410,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             });
         }
 
+        private void OnShepardMouseFrequencyChanged(double frequency)
+        {
+            System.Diagnostics.Debug.WriteLine($"[ShepardMouseFrequency] {frequency:F2} Hz");
+            MainThread.BeginInvokeOnMainThread(() => CurrentShepardMouseFrequency = frequency);
+        }
+
         // 2. PlayShepardSweepProvider entsprechend anpassen:
         private void PlayShepardSweepProvider()
         {
@@ -412,7 +432,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 selectedToneType,
                 sampleRate,
                 OnShepardSweepCycleCount,
-                OnShepardSweepFreqProgress);
+                OnShepardSweepFreqProgress,
+                UpdateIntervalSamples);
 
             double horiz2dMeters = Distance3DHelper.CalculateDistanceMeters(ProbePosition, CurrentMousePosition, MeterPerPixel);
             _shepardSweepAudioManager.Start(horiz2dMeters, ProbeDepthMeters, ProbeRadiusMetersIn2d, VOLUME);
@@ -433,7 +454,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private void InitializeShepardMouseAudio()
         {
             StopAudio();
-            shepardMouseAudioManager = new ShepardMouseAudioManager(selectedToneType, 44100, 2048, VOLUME);
+            shepardMouseAudioManager = new ShepardMouseAudioManager(selectedToneType, SampleRate, UpdateIntervalSamples, VOLUME, OnShepardMouseFrequencyChanged);
             shepardMouseAudioManager.Initialize();
 
             double horiz2dMeters = Distance3DHelper.CalculateDistanceMeters(ProbePosition, CurrentMousePosition, MeterPerPixel);
@@ -459,7 +480,5 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _uiTimer?.Stop();
             _uiTimer = null;
         }
-
-        public bool IsDebugToneType => SelectedToneType?.Debug == true;
     }
 }

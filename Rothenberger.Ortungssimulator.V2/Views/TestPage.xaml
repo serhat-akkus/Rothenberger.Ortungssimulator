@@ -40,6 +40,16 @@
 
         <!-- Canvas und weitere Bereiche bleiben unverändert -->
         <AbsoluteLayout Grid.Row="2" Grid.Column="0" HeightRequest="1000" WidthRequest="1000">
+            <!-- Frequenz-Label oben links -->
+            <Label
+                Text="{Binding CurrentShepardMouseFrequency, StringFormat='Shepard-Frequenz: {0:F2} Hz'}"
+                FontSize="12"
+                TextColor="Black"
+                Padding="8,2"
+                AbsoluteLayout.LayoutBounds="0,0,220,32"
+                AbsoluteLayout.LayoutFlags="None"
+                ZIndex="10" />
+
             <GraphicsView
                 x:Name="CanvasView"
                 HeightRequest="1000"

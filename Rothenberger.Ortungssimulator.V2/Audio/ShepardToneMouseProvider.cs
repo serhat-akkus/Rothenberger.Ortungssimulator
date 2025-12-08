@@ -34,6 +34,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private long _lastUpdateTicks;      // ms (Environment.TickCount64)
         private double _semitoneVelocityPerSecond; // aus T-Geschwindigkeit abgeleitet
 
+        private readonly Action<double>? _frequencyChangedCallback;
+
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
         private double _maxSemitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond;
@@ -46,7 +48,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// <param name="toneType">Konfigurationsobjekt mit allen relevanten Parametern für den Shepard-Ton</param>
         /// <param name="sampleRate">Samplerate</param>
         /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
-        public ShepardToneMouseProvider(ToneType toneType, int sampleRate, int updateIntervalSamples = 2048)
+        public ShepardToneMouseProvider(ToneType toneType, int sampleRate, int updateIntervalSamples = 2048, Action<double>? frequencyChangedCallback = null)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
             _mMax = toneType.MMax ?? 12;
@@ -63,6 +65,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             _lastUpdateTicks = Environment.TickCount64;
             _lastTNormalized = 0.5; // Neutraler Start
+            _frequencyChangedCallback = frequencyChangedCallback;
         }
 
         /// <summary>
@@ -119,10 +122,12 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             double center = (_nMax - 1) / 2.0;
             double semitonesPerSample = _semitoneVelocityPerSecond / _waveFormat.SampleRate;
+            double lastFreq = 0.0;
+            double baseFreq = 0.0;
+            double baseEffectiveIndex = 0.0;
 
             for (int s = 0; s < count; s++)
             {
-                // Tonhöhenänderung ausschließlich aus Mausbewegung
                 _mContinuous += semitonesPerSample;
 
                 double amplitudeSum = 0.0;
@@ -140,10 +145,18 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
                     double freq = _fMin * Math.Pow(2.0, effectiveIndex);
                     _freqs[n] = freq;
+                    lastFreq = freq;
 
                     double amp = Math.Exp(-0.5 * Math.Pow((effectiveIndex - center) / _sigma, 2.0));
                     _amps[n] = amp;
                     amplitudeSum += amp;
+
+                    // Basisfrequenz für das Zentrum berechnen (nur einmal)
+                    if (n == (int)center && s == 0)
+                    {
+                        baseEffectiveIndex = effectiveIndex - Math.Floor(effectiveIndex);
+                        baseFreq = _fMin * Math.Pow(2.0, baseEffectiveIndex);
+                    }
                 }
 
                 double sampleValue = 0.0;
@@ -158,6 +171,11 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     sampleValue /= amplitudeSum;
 
                 buffer[offset + s] = (float)sampleValue;
+
+                if (_frequencyChangedCallback != null && s == 0)
+                {
+                    _frequencyChangedCallback.Invoke(baseFreq);
+                }
             }
 
             return count;

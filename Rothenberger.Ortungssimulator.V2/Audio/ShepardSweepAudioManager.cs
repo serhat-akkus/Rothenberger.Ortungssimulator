@@ -11,16 +11,19 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly Action<double, double>? _freqProgressCallback;
         private readonly int _sampleRate;
         private readonly ToneType _toneType;
+        private readonly int _updateIntervalSamples;
         private bool _disposed;
 
         public ShepardSweepAudioManager(ToneType toneType, int sampleRate,
             Action<int>? cycleCallback,
-            Action<double, double>? freqProgressCallback)
+            Action<double, double>? freqProgressCallback,
+            int updateIntervalSamples = 2048)
         {
             _toneType = toneType;
             _sampleRate = sampleRate;
             _cycleCallback = cycleCallback;
             _freqProgressCallback = freqProgressCallback;
+            _updateIntervalSamples = updateIntervalSamples;
         }
 
         public void Start(double horiz2dMeters, double probeDepthMeters, double probeRadiusMeters, float volume = 0.5f)
@@ -30,12 +33,12 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                 _toneType,
                 _sampleRate,
                 _cycleCallback,
-                _freqProgressCallback);
+                _freqProgressCallback,
+                _updateIntervalSamples);
             _waveOut = new WaveOutEvent { DesiredLatency = 100 };
             _waveOut.Init(_provider);
             _waveOut.Volume = volume;
             _waveOut.Play();
-            _provider.UpdateDistance3DState(horiz2dMeters, probeDepthMeters, probeRadiusMeters);
         }
 
         public void Stop()

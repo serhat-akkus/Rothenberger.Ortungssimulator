@@ -26,10 +26,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private bool _disposed;
         private volatile bool _stopped;
 
-        // Neu: Zustände für 3D-Distanz (nur Berechnung/Speicherung, keine Frequenzänderung)
-        private double _currentD3Meters;
-        private double _currentTNormalized; // 0..1 (0=nah, 1=fern) gemäß Normalize()
-
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
 
@@ -55,15 +51,6 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _phases = new double[_nMax];
             _amps   = new double[_nMax];
             _freqs  = new double[_nMax];
-        }
-
-        // Aufruf bei Mausbewegung: setzt nur Distanzzustand
-        public void UpdateDistance3DState(double horiz2dMeters, double probeDepthMeters, double probeRadius3DMeters)
-        {
-            double d3 = Distance3DHelper.Compute3dDistanceToProbe(horiz2dMeters, probeDepthMeters);
-            double t  = Distance3DHelper.CalculateProximity3D(probeRadius3DMeters, 3d);
-            _currentD3Meters = d3;
-            _currentTNormalized = t;
         }
 
         public void RequestStop() => _stopped = true;

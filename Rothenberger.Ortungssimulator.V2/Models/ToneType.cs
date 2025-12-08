@@ -63,6 +63,5 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             MaxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
             Debug = debug;
         }
-
     }
 }
