@@ -95,7 +95,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             }
 
             double center = (_nMax - 1) / 2.0;
-            // Absolutes Mapping: mContinuous wird direkt aus t berechnet
+
             // Interpolate mouse position every sample, but only update every N samples
             for (int s = 0; s < count; s++)
             {

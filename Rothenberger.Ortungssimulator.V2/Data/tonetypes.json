@@ -62,11 +62,11 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 2,
-    "SmoothingFactor": 0.1,
+    "SmoothingFactor": 0.01,
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 512
   },
   {
     "Id": "shepard2",
