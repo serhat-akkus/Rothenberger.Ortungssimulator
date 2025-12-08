@@ -203,7 +203,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                     "sinus_log" => AudioUpdateHelper.HandleSinusLog3D(sineAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters, lastFrequency),
                     "tonleiter_diskret" => AudioUpdateHelper.HandleTonleiterDiskret3D(sineAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters, lastFrequency),
                     "shepard" => AudioUpdateHelper.HandleShepardMouse3D(shepardMouseAudioManager, normalizedDistance3d),
-                    "shepard_tonleiter" => HandleShepardTonleiter(distance3dMouseToProbe, _canvas.ProbeRadiusMeters),
+                    "shepard_tonleiter" => AudioUpdateHelper.HandleShepardTonleiter(shepardDiscreteAudioManager, selectedToneType, distance3dMouseToProbe, _canvas.ProbeRadiusMeters),
                     _ => AudioUpdateHelper.HandleDefault(sineAudioManager?.Provider),
                 };
 
@@ -396,7 +396,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         {
             StopAudio();
             _anyAudioActive = true;
-            sineAudioManager = new SineWaveAudioManager(44100, 440.0, 0.0f);
+            sineAudioManager = new SineWaveAudioManager(selectedToneType, 44100, 440.0, 0.0f);
             sineAudioManager.Initialize();
             sineAudioManager.SetVolume(VOLUME);
         }
@@ -481,7 +481,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private void InitializeShepardMouseAudio()
         {
             StopAudio();
-            shepardMouseAudioManager = new ShepardMouseAudioManager(selectedToneType, SampleRate, UpdateIntervalSamples, VOLUME, OnShepardMouseFrequencyChanged);
+            shepardMouseAudioManager = new ShepardMouseAudioManager(selectedToneType, SampleRate, VOLUME, OnShepardMouseFrequencyChanged);
             shepardMouseAudioManager.Initialize();
 
             double horiz2dMeters = Distance3DHelper.CalculateDistanceMeters(ProbePosition, CurrentMousePosition, MeterPerPixel);
@@ -492,27 +492,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _anyAudioActive = true;
         }
 
-        private double HandleShepardTonleiter(double distance3dMouseToProbe, double probeRadius)
-        {
-            System.Diagnostics.Debug.WriteLine($"[ShepardTonleiter] distance3dMouseToProbe: {distance3dMouseToProbe:F2}");
-            // Zyklus-Konfiguration aus ToneType lesen
-            int cycles = (int)(selectedToneType.ShepardCyclesFromEdgeToProbe ?? 1);
-            int stepsPerCycle = 25;
-            int steps = stepsPerCycle * cycles;
-            int mMax = selectedToneType.MMax ?? 12;
-            double t = Math.Clamp(distance3dMouseToProbe / probeRadius, 0.0, 1.0);
-            double totalSteps = stepsPerCycle * cycles;
-            double step = (1.0 - t) * totalSteps;
-            double octaveProgress = step / stepsPerCycle; // 0..cycles
-            double mFloat = octaveProgress * mMax; // 0..(cycles*mMax)
-            int m = (int)Math.Round(mFloat) % mMax + 1;
-            shepardDiscreteAudioManager.SetCurrentStep(m);
-
-            // Frequenz des aktuellen diskreten Tons (Basisfrequenz)
-            double freq = selectedToneType.FMin ?? 55.0;
-            freq = freq * Math.Pow(2.0, ((m - 1) / (double)mMax));
-            return freq;
-        }
         public bool CanStartShepard => IsRunNotStarted; // oder ein eigener Zustand
 
         private bool _disposed;

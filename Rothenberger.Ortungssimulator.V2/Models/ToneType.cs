@@ -18,18 +18,13 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public double? SensitivitySemitonesPerSecond { get; set; }
         public double? OctaveOffset { get; set; }
         public double? ShepardCyclesFromEdgeToProbe { get; set; }
-        public double? MaxSemitoneVelocityPerSecond { get; set; }
-
-        // NEU: Type-Property
         public string Type { get; set; }
-
-        // NEU: Debug-Flag
         public bool Debug { get; set; }
-
         public double? LMin { get; set; }
         public double? LMax { get; set; }
+        public int? LatencyInMs { get; set; } // <--- NEU
+        public double? SmoothingFactor { get; set; } // <--- NEU
 
-        // Optional: Automatisch setzen, falls Type nicht im JSON vorhanden ist
         [JsonConstructor]
         public ToneType(
             string id,
@@ -46,10 +41,12 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             double? octaveOffset = null,
             double? shepardCyclesFromEdgeToProbe = null,
             string type = null,
-            double? maxSemitoneVelocityPerSecond = null,
             bool debug = false,
             double? lMin = null,
-            double? lMax = null)
+            double? lMax = null,
+            int? latencyInMs = null, // <--- NEU
+            double? smoothingFactor = null // <--- NEU
+        )
         {
             Id = id;
             Name = name;
@@ -65,10 +62,11 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             OctaveOffset = octaveOffset;
             ShepardCyclesFromEdgeToProbe = shepardCyclesFromEdgeToProbe;
             Type = type ?? id;
-            MaxSemitoneVelocityPerSecond = maxSemitoneVelocityPerSecond;
             Debug = debug;
             LMin = lMin;
             LMax = lMax;
+            LatencyInMs = latencyInMs; // <--- NEU
+            SmoothingFactor = smoothingFactor; // <--- NEU
         }
     }
 }

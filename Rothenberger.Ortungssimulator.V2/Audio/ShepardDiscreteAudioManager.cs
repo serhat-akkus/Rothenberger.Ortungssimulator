@@ -34,7 +34,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         {
             if (isInitialized) return;
             provider = new ShepardDiscreteProvider(toneType, sampleRate, mMax, nMax, lMin, lMax);
-            waveOut = new WaveOutEvent { DesiredLatency = 100 };
+            int latency = toneType.LatencyInMs ?? 100;
+            waveOut = new WaveOutEvent { DesiredLatency = latency };
             waveOut.Init(provider);
             waveOut.Volume = volume;
             isInitialized = true;

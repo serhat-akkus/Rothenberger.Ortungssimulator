@@ -23,33 +23,22 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly double[] _amps;
         private readonly double[] _freqs;
 
-        private readonly double _sensitivitySemitonesPerSecond; // Skaliert die Tonhöhenänderung je normierter T-Geschwindigkeit
         private readonly double _shepardCyclesFromEdgeToProbe;
 
         private bool _disposed;
         private volatile bool _stopped;
 
-        // Maus-/Distanz-Zustände
-        private double _lastTNormalized;    // zur Geschwindigkeitsberechnung
-        private long _lastUpdateTicks;      // ms (Environment.TickCount64)
-        private double _semitoneVelocityPerSecond; // aus T-Geschwindigkeit abgeleitet
-
         private readonly Action<double>? _frequencyChangedCallback;
+
+        private readonly double _smoothingFactor;
 
         public WaveFormat WaveFormat => _waveFormat;
         public bool IsStopped => _stopped;
-        private double _maxSemitoneVelocityPerSecond = MaxSemitoneVelocityPerSecond;
-        private const double MaxSemitoneVelocityPerSecond = 3.0;
         private double _currentTNormalized = 0.5;
+        private double _smoothedTNormalized = 0.5;
 
-        /// <summary>
-        /// Shepard-Ton Provider, dessen Parameter direkt aus einem ToneType-Objekt gelesen werden.
-        /// Die Tonhöhenänderung und weitere Eigenschaften werden aus der Konfiguration des ToneType bestimmt.
-        /// </summary>
-        /// <param name="toneType">Konfigurationsobjekt mit allen relevanten Parametern für den Shepard-Ton</param>
-        /// <param name="sampleRate">Samplerate</param>
-        /// <param name="updateIntervalSamples">Intervall für Progress-Callback</param>
-        public ShepardToneMouseProvider(ToneType toneType, int sampleRate, int updateIntervalSamples = 2048, Action<double>? frequencyChangedCallback = null)
+        
+        public ShepardToneMouseProvider(ToneType toneType, int sampleRate, Action<double>? frequencyChangedCallback = null)
         {
             _waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(sampleRate, 1);
             _mMax = toneType.MMax ?? 12;
@@ -57,17 +46,15 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _fMin = toneType.FMin ?? 55.0;
             _sigma = toneType.Sigma ?? 1.0;
             _octaveOffset = toneType.OctaveOffset ?? 0.0;
-            _sensitivitySemitonesPerSecond = toneType.SensitivitySemitonesPerSecond ?? 3.0;
-            _maxSemitoneVelocityPerSecond = toneType.MaxSemitoneVelocityPerSecond ?? MaxSemitoneVelocityPerSecond;
             _shepardCyclesFromEdgeToProbe = toneType.ShepardCyclesFromEdgeToProbe ?? 1.0;
+            _smoothingFactor = toneType.SmoothingFactor ?? 0.1;
 
             _phases = new double[_nMax];
             _amps = new double[_nMax];
             _freqs = new double[_nMax];
 
-            _lastUpdateTicks = Environment.TickCount64;
-            _lastTNormalized = 0.5; // Neutraler Start
             _currentTNormalized = 0.5; // 0 = Zentrum, 1 = Rand
+            _smoothedTNormalized = 0.5;
             _frequencyChangedCallback = frequencyChangedCallback;
         }
 
@@ -80,43 +67,23 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         /// <param name="probeRadius3DMeters">Radius für Normalisierung</param>
         public void UpdateDistance3DState(double normalizedDistance3d)
         {
-            // Invertiere den Wert, damit Annäherung (Maus näher an Sonde) zu steigendem Ton führt
             double t = 1.0 - normalizedDistance3d;
-            _currentTNormalized = t; // Speichere aktuelle Position
+            double deltaTNormalized = 0;
+            _currentTNormalized = t;
 
-            long nowTicks = Environment.TickCount64;
-            double dtSec = GetElapsedSecondsSinceLastUpdate(nowTicks);
+            if (_smoothingFactor > 0.0)
+            {
+                deltaTNormalized = _currentTNormalized - _smoothedTNormalized;
+                _smoothedTNormalized += _smoothingFactor * deltaTNormalized;
+            }
+            else
+                _smoothedTNormalized = _currentTNormalized;
 
-            System.Diagnostics.Debug.WriteLine($"[ShepardToneMouseProvider] normalizedDistance3d (inverted): {t:F4}");
-
-            double tVelocityPerSecond = (t - _lastTNormalized) / dtSec;
-            // Skaliere die Semiton-Geschwindigkeit so, dass die gewünschte Anzahl Zyklen abgespielt wird
-            double semitonesPerSecond = _shepardCyclesFromEdgeToProbe * _mMax * tVelocityPerSecond;
-            // Optional: Begrenzung wie bisher
-            if (_maxSemitoneVelocityPerSecond > 0)
-                semitonesPerSecond = Math.Clamp(semitonesPerSecond, -_maxSemitoneVelocityPerSecond, _maxSemitoneVelocityPerSecond);
-            _semitoneVelocityPerSecond = semitonesPerSecond;
-
-            _lastTNormalized = t;
-            _lastUpdateTicks = nowTicks;
-        }
-
-        private static double UpdateSemitoneVelocity(double tVelocityPerSecond, double velocityCap, double sensitivitySemitonesPerSecond) =>
-            // Semiton-Geschwindigkeit: invertiere Vorzeichen so, dass Annäherung -> steigend (positiv)
-            // t sinkt bei Annäherung, tVelocity < 0, dadurch -tVelocity > 0 -> steigender Ton.
-            velocityCap == 0
-                ? -tVelocityPerSecond * sensitivitySemitonesPerSecond
-                : Math.Clamp(
-                    -tVelocityPerSecond * sensitivitySemitonesPerSecond,
-                    -velocityCap,
-                    velocityCap);
-
-        private double GetElapsedSecondsSinceLastUpdate(long nowTicks)
-        {
-            long dtMs = nowTicks - _lastUpdateTicks;
-            if (dtMs <= 0) dtMs = 1; // Schutz gegen Division durch 0
-            double dtSec = dtMs / 1000.0;
-            return dtSec;
+            System.Diagnostics.Debug.WriteLine($"[ShepardToneMouseProvider] normalizedDistance3d (inverted): {t:F4}, " +
+                $"smoothed: {_smoothedTNormalized:F4}, " +
+                $"normalized: {_currentTNormalized:F4}\"" +
+                $"deltaTNormalized: {deltaTNormalized:F4}\"" +
+                $"smoothing factor: {_smoothingFactor:F4}");
         }
 
         public void RequestStop() => _stopped = true;
@@ -138,20 +105,19 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
             double center = (_nMax - 1) / 2.0;
             // Absolutes Mapping: mContinuous wird direkt aus t berechnet
-            double mContinuousAbs = _shepardCyclesFromEdgeToProbe * _mMax * (1.0 - _currentTNormalized); // 0 = Rand, max = Zentrum
+            double mShepardIndex = _shepardCyclesFromEdgeToProbe * _mMax * (1.0 - _smoothedTNormalized);
+            // Oktaven-Offset auf die Basisfrequenz anwenden
+            mShepardIndex -= _octaveOffset * _mMax;
             double lastFreq = 0.0;
             double baseFreq = 0.0;
             double baseEffectiveIndex = 0.0;
 
             for (int s = 0; s < count; s++)
             {
-                // Kein inkrementelles Update mehr, sondern immer absolut:
-                double mContinuous = mContinuousAbs;
-
                 double amplitudeSum = 0.0;
                 for (int n = 0; n < _nMax; n++)
                 {
-                    double compositeIndex = n + mContinuous / _mMax;
+                    double compositeIndex = n + mShepardIndex / _mMax;
 
                     int octaveWraps = (int)Math.Floor(compositeIndex / _nMax);
                     double effectiveIndex = compositeIndex - octaveWraps * _nMax;
@@ -173,7 +139,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
                     if (n == (int)center && s == 0)
                     {
                         baseEffectiveIndex = effectiveIndex - Math.Floor(effectiveIndex);
-                        baseFreq = _fMin * Math.Pow(2.0, baseEffectiveIndex);
+                        baseFreq = _fMin * Math.Pow(2.0, baseEffectiveIndex - _octaveOffset);
                         _lastBaseFreq = baseFreq;
                     }
                 }

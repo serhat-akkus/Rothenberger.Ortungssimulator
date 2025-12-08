@@ -1,5 +1,6 @@
 ﻿using NAudio.Wave;
 using Rothenberger.Ortungssimulator.V2.Audio;
+using Rothenberger.Ortungssimulator.V2.Models;
 using System;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
@@ -11,10 +12,12 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private readonly int sampleRate;
         private readonly double initialFrequency;
         private readonly float initialVolume;
+        private readonly ToneType toneType;
         private bool isInitialized;
 
-        public SineWaveAudioManager(int sampleRate = 44100, double frequency = 440.0, float volume = 0.0f)
+        public SineWaveAudioManager(ToneType toneType, int sampleRate = 44100, double frequency = 440.0, float volume = 0.0f)
         {
+            this.toneType = toneType;
             this.sampleRate = sampleRate;
             this.initialFrequency = frequency;
             this.initialVolume = volume;
@@ -23,8 +26,9 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public void Initialize()
         {
             if (isInitialized) return;
-            waveOut = new WaveOutEvent { DesiredLatency = 100 };
             sineProvider = new SineWaveProvider(sampleRate, initialFrequency, initialVolume);
+            int latency = toneType.LatencyInMs ?? 100;
+            waveOut = new WaveOutEvent { DesiredLatency = latency };
             waveOut.Init(sineProvider);
             waveOut.Volume = 1.0f;
             isInitialized = true;

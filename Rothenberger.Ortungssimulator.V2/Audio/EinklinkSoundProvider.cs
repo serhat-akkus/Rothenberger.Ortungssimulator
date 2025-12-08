@@ -4,6 +4,7 @@ using System;
 
 public class EinklinkSoundProvider : IAudioProvider
 {
+    private readonly object _lock = new();
     private IWavePlayer? _waveOut;
     private SignalGenerator? _signalGen;
 
@@ -12,7 +13,6 @@ public class EinklinkSoundProvider : IAudioProvider
         Stop();
         _signalGen = new SignalGenerator()
         {
-            Gain = 0.5,
             Frequency = 880, // z.B. hoher Ton
             Type = SignalGeneratorType.Sin
         };
@@ -33,10 +33,13 @@ public class EinklinkSoundProvider : IAudioProvider
 
     public void Stop()
     {
-        _waveOut?.Stop();
-        _waveOut?.Dispose();
-        _waveOut = null;
-        _signalGen = null;
+        lock (_lock)
+        {
+            _waveOut?.Stop();
+            _waveOut?.Dispose();
+            _waveOut = null;
+            _signalGen = null;
+        }
     }
 
     public void Dispose()

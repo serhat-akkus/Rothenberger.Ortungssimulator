@@ -1,4 +1,5 @@
-﻿using NAudio.Wave;
+﻿using Microsoft.VisualBasic;
+using NAudio.Wave;
 using System;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
@@ -9,16 +10,14 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private ShepardToneMouseProvider? provider;
         private readonly int sampleRate;
         private readonly Models.ToneType toneType;
-        private readonly int updateIntervalSamples;
         private bool isInitialized;
         private float volume;
         private readonly Action<double>? _frequencyChangedCallback;
 
-        public ShepardMouseAudioManager(Models.ToneType toneType, int sampleRate = 44100, int updateIntervalSamples = 2048, float initialVolume = 0.5f, Action<double>? frequencyChangedCallback = null)
+        public ShepardMouseAudioManager(Models.ToneType toneType, int sampleRate = 44100, float initialVolume = 0.5f, Action<double>? frequencyChangedCallback = null)
         {
             this.toneType = toneType;
             this.sampleRate = sampleRate;
-            this.updateIntervalSamples = updateIntervalSamples;
             this.volume = initialVolume;
             _frequencyChangedCallback = frequencyChangedCallback;
         }
@@ -26,8 +25,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public void Initialize()
         {
             if (isInitialized) return;
-            provider = new ShepardToneMouseProvider(toneType, sampleRate, updateIntervalSamples, _frequencyChangedCallback);
-            waveOut = new WaveOutEvent { DesiredLatency = 100 };
+            provider = new ShepardToneMouseProvider(toneType, sampleRate, _frequencyChangedCallback);
+            waveOut = new WaveOutEvent { DesiredLatency = toneType.LatencyInMs ?? 100 };
             waveOut.Init(provider);
             waveOut.Volume = volume;
             isInitialized = true;

@@ -122,6 +122,29 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             return lastFrequency;
         }
 
+        public static double HandleShepardTonleiter(
+            ShepardDiscreteAudioManager? shepardDiscreteAudioManager,
+            ToneType selectedToneType,
+            double distance3dMouseToProbe,
+            double probeRadius)
+        {
+            int cycles = (int)(selectedToneType.ShepardCyclesFromEdgeToProbe ?? 1);
+            int stepsPerCycle = 25;
+            int steps = stepsPerCycle * cycles;
+            int mMax = selectedToneType.MMax ?? 12;
+            double t = Math.Clamp(distance3dMouseToProbe / probeRadius, 0.0, 1.0);
+            double totalSteps = stepsPerCycle * cycles;
+            double step = (1.0 - t) * totalSteps;
+            double octaveProgress = step / stepsPerCycle; // 0..cycles
+            double mFloat = octaveProgress * mMax; // 0..(cycles*mMax)
+            int m = (int)Math.Round(mFloat) % mMax + 1;
+            shepardDiscreteAudioManager?.SetCurrentStep(m);
+
+            double freq = selectedToneType.FMin ?? 55.0;
+            freq = freq * Math.Pow(2.0, ((m - 1) / (double)mMax));
+            return freq;
+        }
+
         public static double? HandleDefault(SineWaveProvider? sineProvider)
         {
             sineProvider?.SetVolume(0.0f);
