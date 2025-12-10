@@ -1,3 +1,6 @@
 <Solution>
+  <Project Path="Rothenberger.Ortungssimulator.V2/Rothenberger.Ortungssimulator.V2.csproj" Id="fc5edecc-9a92-4261-a0ff-8e2295cfcfae">
+    <Deploy Solution="Release|*" />
+  </Project>
   <Project Path="Rothenberger.Ortungssimulator/Rothenberger.Ortungssimulator.csproj" />
 </Solution>

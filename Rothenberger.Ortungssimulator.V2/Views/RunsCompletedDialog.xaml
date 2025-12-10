@@ -1,0 +1,42 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Rothenberger.Ortungssimulator.V2.Views.RunsCompletedDialog"
+             x:Name="Root"
+             IsVisible="{Binding IsRunsCompletedVisible}"
+             HorizontalOptions="Fill"
+             VerticalOptions="Fill">
+    <Grid BackgroundColor="#40000000">
+        <Border x:Name="Card"
+                BackgroundColor="White"
+                StrokeShape="RoundRectangle 12"
+                Padding="20"
+                WidthRequest="320"
+                Shadow="10,5,5,Black"
+                HorizontalOptions="Center"
+                VerticalOptions="Center">
+            <Grid RowDefinitions="Auto,Auto,Auto"
+                  RowSpacing="8">
+                <Label Text="Alle Testläufe beendet"
+                       FontSize="20"
+                       FontAttributes="Bold"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,4"
+                       Grid.Row="0" />
+                <Label Text="Du kannst nun fortfahren."
+                       FontSize="14"
+                       HorizontalTextAlignment="Center"
+                       Margin="0,0,0,8"
+                       Grid.Row="1" />
+                <Button Text="Weiter"
+                        Command="{Binding ContinueRunsCompletedCommand}"
+                        HorizontalOptions="Center"
+                        WidthRequest="160"
+                        Grid.Row="2" />
+            </Grid>
+            <Border.GestureRecognizers>
+                <PanGestureRecognizer PanUpdated="OnPanUpdated" />
+            </Border.GestureRecognizers>
+        </Border>
+    </Grid>
+</ContentView>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="Rothenberger.Ortungssimulator.V2.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:Rothenberger.Ortungssimulator.V2.Views"
+    Title="Rothenberger.Ortungssimulator.V2">
+
+    <ShellContent
+        Title="Start"
+        ContentTemplate="{DataTemplate views:StartPage}" />
+
+    <ShellContent Title="Test" ContentTemplate="{DataTemplate views:TestPage}" Route="TestPage" />
+    <!-- Entferne ShellContent für Ergebnisse, damit die Seite nur per PushAsync und mit ViewModel angezeigt wird -->
+</Shell>

@@ -1,0 +1,188 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Rothenberger.Ortungssimulator.V2.Views.TestPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:Rothenberger.Ortungssimulator.V2.Views"
+    BackgroundColor="White"
+    Padding="10">
+
+    <Grid RowDefinitions="Auto,Auto,*"
+          ColumnDefinitions="1000,Auto"
+          ColumnSpacing="12">
+
+        <!-- Kopf: Button links, Labels rechts -->
+        <StackLayout Grid.Row="0" Grid.Column="0" Orientation="Horizontal" HorizontalOptions="Center" Margin="0,20,0,0" Spacing="24">
+            <Button
+                Text="{Binding StartRunButtonText}"
+                Command="{Binding StartRunCommand}"
+                IsEnabled="{Binding IsRunNotStarted}"
+                WidthRequest="200"
+                HeightRequest="60"
+                BackgroundColor="White"
+                TextColor="Black"
+                Opacity="0.95"
+                VerticalOptions="Center"
+                Margin="0,0,12,0"
+                InputTransparent="False" />
+			<StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="24" VerticalOptions="Center">
+                    <Label Text="{Binding ProbeDepthMeters, StringFormat='Sondentiefe: {0:F1} m'}" FontSize="18" />
+                    <Label Text="{Binding ProbeRadiusMetersIn2d, StringFormat='Sondenradius: {0:F1} m'}" FontSize="18" />
+                </StackLayout>
+                <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
+                    <Label Text="Timer:" FontSize="24" />
+                    <Label Text="{Binding TimerText}" FontSize="24" />
+                    <Label Text="{Binding DistanceText}" FontSize="24" Margin="20,0,0,0" />
+                </StackLayout>
+			</StackLayout>
+        </StackLayout>
+
+        <!-- Canvas und weitere Bereiche bleiben unverändert -->
+        <AbsoluteLayout Grid.Row="2" Grid.Column="0" HeightRequest="1000" WidthRequest="1000">
+            <!-- Frequenz-Label oben links -->
+            <Label
+                Text="{Binding CurrentShepardMouseFrequency, StringFormat='Frequenz: {0:F2} Hz'}"
+                FontSize="12"
+                TextColor="Black"
+                Padding="8,2"
+                AbsoluteLayout.LayoutBounds="0,0,220,32"
+                AbsoluteLayout.LayoutFlags="None"
+                ZIndex="10"
+				InputTransparent="{Binding IsRunNotStarted}" />
+
+            <GraphicsView
+                x:Name="CanvasView"
+                HeightRequest="1000"
+                WidthRequest="1000"
+                AbsoluteLayout.LayoutBounds="0,0,1000,1000"
+                AbsoluteLayout.LayoutFlags="None"
+                InputTransparent="{Binding IsRunNotStarted}" />
+
+            <Border
+                x:Name="ArrowBorder"
+                HeightRequest="120"
+                WidthRequest="120"
+                IsVisible="{Binding IsArrowBoxVisible}"
+                InputTransparent="True"
+                AbsoluteLayout.LayoutBounds="880,0,120,120"
+                AbsoluteLayout.LayoutFlags="None">
+                <GraphicsView
+                    x:Name="ArrowView"
+                    HeightRequest="120"
+                    WidthRequest="120"
+                    InputTransparent="True" />
+            </Border>
+        </AbsoluteLayout>
+
+        <!-- Rechter Bereich bleibt unverändert -->
+        <Grid Grid.Row="2" Grid.Column="1"
+              RowDefinitions="Auto,Auto,*,Auto,Auto"
+              ColumnDefinitions="Auto"
+              RowSpacing="6">
+            <!-- Name / Ton-Typ -->
+            <Grid Grid.Row="0"
+                  ColumnDefinitions="90,180"
+                  RowDefinitions="Auto,Auto"
+                  Padding="0,0,0,0">
+                <Label Grid.Row="0" Grid.Column="0" Text="Name:" FontSize="16" FontAttributes="Bold" />
+                <Label Grid.Row="0" Grid.Column="1" Text="{Binding UserNameDisplay}" FontSize="16" />
+                <Label Grid.Row="1" Grid.Column="0" Text="Ton-Typ:" FontSize="16" FontAttributes="Bold" />
+                <Label Grid.Row="1" Grid.Column="1" Text="{Binding ToneTypeDisplay}" FontSize="16" />
+            </Grid>
+
+            <!-- Tabellen-Header -->
+            <Grid Grid.Row="1"
+                  ColumnDefinitions="160,60,80"
+                  BackgroundColor="{AppThemeBinding Light='#EEEEEE', Dark='#222222'}"
+                  Padding="10,8">
+                <Label Grid.Column="0" Text="Zeitstempel" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="Start" />
+                <Label Grid.Column="1" Text="Dauer" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+                <Label Grid.Column="2" Text="Distanz (m)" FontAttributes="Bold"
+                       VerticalTextAlignment="Center" HorizontalTextAlignment="End" />
+            </Grid>
+
+            <!-- Ergebnisliste -->
+            <CollectionView Grid.Row="2"
+                            Margin="0,4,0,0"
+                            ItemsSource="{Binding RunResults}"
+                            SelectionMode="None"
+                            ItemSizingStrategy="MeasureAllItems">
+                <CollectionView.ItemsLayout>
+                    <LinearItemsLayout Orientation="Vertical" />
+                </CollectionView.ItemsLayout>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid ColumnDefinitions="160,60,80"
+                              Padding="10,8">
+                            <Label Grid.Column="0"
+                                   Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Start"
+                                   LineBreakMode="TailTruncation" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding Time, StringFormat='{0:mm\\:ss}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="Center" />
+                            <Label Grid.Column="2"
+                                   Text="{Binding Distance, StringFormat='{0:F2}'}"
+                                   VerticalTextAlignment="Center"
+                                   HorizontalTextAlignment="End" />
+                        </Grid>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+            <!-- Shepard (Provider) Buttons und Frequenz-UI nur anzeigen, wenn Debug-Flag gesetzt ist -->
+            <Grid Grid.Row="2" Grid.Column="1"
+                  RowDefinitions="Auto,Auto,*,Auto,Auto"
+                  ColumnDefinitions="Auto"
+                  RowSpacing="6">
+                <!-- Shepard (Provider) Buttons -->
+                <StackLayout Grid.Row="3" Orientation="Horizontal" Spacing="12" HorizontalOptions="Start"
+                             IsVisible="{Binding IsDebugToneType}">
+                    <Button
+                        Text="Shepard Sweep Start"
+                        Command="{Binding PlayShepardSweepProviderCommand}"
+                        WidthRequest="180"
+                        HeightRequest="46"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="Black"
+                        Opacity="0.95" />
+                    <Button
+                        Text="Shepard Sweep Stop"
+                        Command="{Binding StopShepardSweepProviderCommand}"
+                        WidthRequest="180"
+                        HeightRequest="46"
+                        BackgroundColor="#FFFFFF"
+                        TextColor="Black"
+                        Opacity="0.95" />
+                </StackLayout>
+
+                <!-- Shepard Status -->
+                <Frame Grid.Row="4"
+                       Padding="12"
+                       BorderColor="{AppThemeBinding Light='#CCCCCC', Dark='#444444'}"
+                       BackgroundColor="{AppThemeBinding Light='#FAFAFA', Dark='#1E1E1E'}"
+                       CornerRadius="8"
+                       IsVisible="{Binding IsDebugToneType}">
+                    <StackLayout Spacing="6">
+                        <Label Text="Shepard-Sweep Status" FontAttributes="Bold" />
+                        <Label Text="{Binding CurrentFrequency, StringFormat='Aktuelle Grundfrequenz: {0:F2} Hz'}" />
+                        <Label Text="{Binding ShepardCycleCount, StringFormat='Abgeschlossene Zyklen: {0}'}" />
+                        <StackLayout Orientation="Horizontal" Spacing="8">
+                            <Label Text="Zyklus-Fortschritt:" />
+                            <ProgressBar Progress="{Binding ShepardProgress}" WidthRequest="160" />
+                            <Label Text="{Binding ShepardProgress, StringFormat='{0:P0}'}" WidthRequest="60" HorizontalTextAlignment="End" />
+                        </StackLayout>
+                    </StackLayout>
+                </Frame>
+            </Grid>
+
+        </Grid>
+
+        <views:RunsCompletedDialog Grid.RowSpan="3" Grid.ColumnSpan="2" ZIndex="100" />
+    </Grid>
+</ContentPage>

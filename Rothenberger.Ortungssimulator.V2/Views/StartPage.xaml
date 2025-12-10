@@ -1,0 +1,50 @@
+﻿<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:Rothenberger.Ortungssimulator.V2.ViewModels"
+             x:Class="Rothenberger.Ortungssimulator.V2.Views.StartPage">
+    <ContentPage.BindingContext>
+        <vm:StartViewModel />
+    </ContentPage.BindingContext>
+    <VerticalStackLayout Padding="20" Spacing="16">
+        <!-- Name -->
+        <Label Text="Name" FontAttributes="Bold" />
+        <Entry Placeholder="Name eingeben" Text="{Binding UserName}" />
+        <Label Text="{Binding UserNameError}" TextColor="Red" FontSize="12" IsVisible="{Binding UserNameError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <!-- Ton-Typ -->
+        <Label Text="Ton-Typ" FontAttributes="Bold" />
+        <Picker Title="Ton-Typ auswählen"
+                ItemsSource="{Binding ToneTypes}"
+                ItemDisplayBinding="{Binding Name}"
+                SelectedItem="{Binding SelectedToneType}" />
+        <Label Text="{Binding ToneTypeError}" TextColor="Red" FontSize="12" IsVisible="{Binding ToneTypeError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <!-- Anzahl Test-Runs -->
+        <Label Text="Anzahl Test-Runs" FontAttributes="Bold" />
+        <Entry Placeholder="Anzahl eingeben"
+               Keyboard="Numeric"
+               Text="{Binding TestRunCount}" />
+        <Label Text="{Binding RunCountError}" TextColor="Red" FontSize="12" IsVisible="{Binding RunCountError, Converter={StaticResource StringNotEmptyConverter}}" />
+
+        <!-- Sondentiefe -->
+        <Label Text="Sondentiefe (m)" FontAttributes="Bold" />
+        <Slider Minimum="0" Maximum="3" Value="{Binding ProbeDepthMeters}" />
+        <Label Text="{Binding ProbeDepthMeters, StringFormat='Aktuelle Tiefe: {0:F1} m'}" FontSize="12" />
+
+        <!-- Checkbox + Text sehr nah -->
+        <HorizontalStackLayout Spacing="0">
+            <CheckBox IsChecked="{Binding ShowArrow}" VerticalOptions="Center" />
+            <Label Text="Hilfspfeil anzeigen" VerticalOptions="Center" Margin="-80,0,0,0" />
+        </HorizontalStackLayout>
+
+        <!-- Checkbox + Text Sondenradius anzeigen -->
+		<!-- Checkbox + Text sehr nah -->
+		<HorizontalStackLayout Spacing="0">
+			<CheckBox IsChecked="{Binding ShowProbeRadius}" VerticalOptions="Center" />
+			<Label Text="Zeige Sondenradius an" VerticalOptions="Center" Margin="-80,0,0,0" />
+		</HorizontalStackLayout>
+
+        <Button Text="Start"
+                Command="{Binding StartCommand}" />
+    </VerticalStackLayout>
+</ContentPage>
