@@ -33,7 +33,12 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private void LoadToneTypes()
         {
-            var lines = File.ReadAllLines("Data/tonetypes.json");
+            var exeDir = AppContext.BaseDirectory;
+            var jsonPath = Path.Combine(exeDir, "tonetypes.json");
+            if (!File.Exists(jsonPath))
+                throw new FileNotFoundException($"Die Datei 'tonetypes.json' wurde im Anwendungsverzeichnis nicht gefunden: {jsonPath}");
+
+            var lines = File.ReadAllLines(jsonPath);
             var jsonLines = lines
                 .SkipWhile(line => !line.TrimStart().StartsWith("["))
                 .ToArray();

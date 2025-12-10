@@ -90,9 +90,13 @@
 	</ItemGroup>
 
   <ItemGroup>
-    <None Update="Data\tonetypes.json">
+    <None Update="tonetypes.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Data\" />
   </ItemGroup>
 
 </Project>
