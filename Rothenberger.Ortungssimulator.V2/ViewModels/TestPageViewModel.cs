@@ -125,6 +125,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
             einklinkAudioManager = new EinklinkAudioManager(selectedToneType);
             beepAudioService = new BeepAudioService();
+            if (selectedToneType?.IdleBeepFrequency != null)
+                beepAudioService.SetFrequency(selectedToneType.IdleBeepFrequency.Value);
         }
 
         public bool IsMouseOverCanvas(Point mousePosition, double canvasX, double canvasY, double canvasWidth, double canvasHeight)

@@ -10,7 +10,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "sinus_log",
@@ -24,7 +25,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "tonleiter_diskret",
@@ -62,7 +64,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard",
@@ -82,7 +85,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard2",
@@ -102,7 +106,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard3",
@@ -122,7 +127,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard4",
@@ -142,7 +148,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard5",
@@ -162,7 +169,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard6",
@@ -182,7 +190,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard7",
@@ -202,7 +211,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard8",
@@ -222,7 +232,8 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   },
   {
     "Id": "shepard_tonleiter",
@@ -241,6 +252,7 @@
     "DoubleBeepFrequency1": 261.6,
     "DoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6
+    "AusklinkDoubleBeepFrequency2": 261.6,
+    "IdleBeepFrequency": 261.63
   }
 ]

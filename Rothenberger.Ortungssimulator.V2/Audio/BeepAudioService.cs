@@ -1,5 +1,6 @@
 ﻿using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using Rothenberger.Ortungssimulator.V2.Models;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
@@ -8,9 +9,14 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         private Timer _timer;
         private readonly int _intervalMs = 1000;
         private readonly float _beepDurationSec = 0.1f;
-        private readonly int _beepFrequency = 1000;
+        private int _beepFrequency = 1000;
         private bool _isPlaying;
         private readonly object _lock = new();
+
+        public void SetFrequency(double frequency)
+        {
+            _beepFrequency = (int)frequency;
+        }
 
         public void Play()
         {
