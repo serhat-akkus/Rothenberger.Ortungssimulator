@@ -11,11 +11,13 @@ public class EinklinkSoundProvider : IAudioProvider
     private System.Timers.Timer? _timer2;
     private readonly double _freq1;
     private readonly double _freq2;
+    private readonly int _durationMs;
 
-    public EinklinkSoundProvider(double freq1, double freq2)
+    public EinklinkSoundProvider(double freq1, double freq2, int durationMs = 200)
     {
         _freq1 = freq1;
         _freq2 = freq2;
+        _durationMs = durationMs;
     }
 
     public void Play()
@@ -31,7 +33,7 @@ public class EinklinkSoundProvider : IAudioProvider
         _waveOut.Init(_signalGen);
         _waveOut.Play();
 
-        _timer1 = new System.Timers.Timer(200);
+        _timer1 = new System.Timers.Timer(_durationMs);
         _timer1.Elapsed += (s, e) =>
         {
             _timer1.Dispose();
@@ -47,7 +49,7 @@ public class EinklinkSoundProvider : IAudioProvider
             _waveOut.Init(_signalGen);
             _waveOut.Play();
 
-            _timer2 = new System.Timers.Timer(200);
+            _timer2 = new System.Timers.Timer(_durationMs);
             _timer2.Elapsed += (s2, e2) =>
             {
                 _timer2.Dispose();

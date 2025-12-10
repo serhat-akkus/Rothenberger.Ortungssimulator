@@ -30,6 +30,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public double? AusklinkDoubleBeepFrequency1 { get; set; } // <--- NEU
         public double? AusklinkDoubleBeepFrequency2 { get; set; } // <--- NEU
         public double? IdleBeepFrequency { get; set; } // <--- NEU
+        public int? DoubleBeepDurationMs { get; set; } // <--- NEW
 
         [JsonConstructor]
         public ToneType(
@@ -57,7 +58,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             double? doubleBeepFrequency2 = null, // <--- NEU
             double? ausklinkDoubleBeepFrequency1 = null, // <--- NEU
             double? ausklinkDoubleBeepFrequency2 = null, // <--- NEU
-            double? idleBeepFrequency = null // <--- NEU
+            double? idleBeepFrequency = null, // <--- NEU
+            int? doubleBeepDurationMs = null // <--- NEW
         )
         {
             Id = id;
@@ -85,6 +87,7 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             AusklinkDoubleBeepFrequency1 = ausklinkDoubleBeepFrequency1; // <--- NEU
             AusklinkDoubleBeepFrequency2 = ausklinkDoubleBeepFrequency2; // <--- NEU
             IdleBeepFrequency = idleBeepFrequency; // <--- NEU
+            DoubleBeepDurationMs = doubleBeepDurationMs; // <--- NEW
         }
     }
 }
