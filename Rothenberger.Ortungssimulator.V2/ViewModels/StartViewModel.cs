@@ -33,13 +33,18 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private void LoadToneTypes()
         {
-            var json = File.ReadAllText("Data/tonetypes.json");
+            var lines = File.ReadAllLines("Data/tonetypes.json");
+            var jsonLines = lines
+                .SkipWhile(line => !line.TrimStart().StartsWith("["))
+                .ToArray();
+            var json = string.Join(Environment.NewLine, jsonLines);
+
             var types = JsonSerializer.Deserialize<List<ToneType>>(json);
             ToneTypes.Clear();
             foreach (var type in types)
                 ToneTypes.Add(type);
 
-            SelectedToneType = ToneTypes.FirstOrDefault(); // erste verfügbare (kein Shepard mehr)
+            SelectedToneType = ToneTypes.FirstOrDefault();
         }
 
         private async void OnStart()

@@ -44,7 +44,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             _octaveOffset = toneType.OctaveOffset ?? 0.0;
             _cycleCallback = cycleCallback;
             _freqProgressCallback = freqProgressCallback;
-            _updateIntervalSamples = Math.Max(128, updateIntervalSamples);
+            _updateIntervalSamples = Math.Max(1, updateIntervalSamples);
             double semitonesPerSecond = toneType.SensitivitySemitonesPerSecond ?? 3.0;
             _semitonesPerSample = semitonesPerSecond / sampleRate;
 

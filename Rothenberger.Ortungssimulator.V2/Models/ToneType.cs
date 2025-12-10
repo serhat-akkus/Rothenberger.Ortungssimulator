@@ -25,8 +25,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public int? LatencyInMs { get; set; } // <--- NEU
         public double? SmoothingFactor { get; set; } // <--- NEU
         public int? UpdateIntervalSamples { get; set; } // <--- NEU
-        public double? DoubleBeepFrequency1 { get; set; } // <--- NEU
-        public double? DoubleBeepFrequency2 { get; set; } // <--- NEU
+        public double? EinklinkDoubleBeepFrequency1 { get; set; } // <--- NEU
+        public double? EinklinkDoubleBeepFrequency2 { get; set; } // <--- NEU
         public double? AusklinkDoubleBeepFrequency1 { get; set; } // <--- NEU
         public double? AusklinkDoubleBeepFrequency2 { get; set; } // <--- NEU
         public double? IdleBeepFrequency { get; set; } // <--- NEU
@@ -55,8 +55,8 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             int? latencyInMs = null, // <--- NEU
             double? smoothingFactor = null, // <--- NEU
             int? updateIntervalSamples = null, // <--- NEU
-            double? doubleBeepFrequency1 = null, // <--- NEU
-            double? doubleBeepFrequency2 = null, // <--- NEU
+            double? einklinkDoubleBeepFrequency1 = null, // <--- NEU
+            double? einklinkDoubleBeepFrequency2 = null, // <--- NEU
             double? ausklinkDoubleBeepFrequency1 = null, // <--- NEU
             double? ausklinkDoubleBeepFrequency2 = null, // <--- NEU
             double? idleBeepFrequency = null, // <--- NEU
@@ -82,10 +82,10 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             LMin = lMin;
             LMax = lMax;
             LatencyInMs = latencyInMs; // <--- NEU
-            SmoothingFactor = smoothingFactor; // <--- NEU
+            SmoothingFactor = smoothingFactor == null || smoothingFactor == 0 ? 1 : smoothingFactor; // Default 1, falls null oder 0
             UpdateIntervalSamples = updateIntervalSamples; // <--- NEU
-            DoubleBeepFrequency1 = doubleBeepFrequency1; // <--- NEU
-            DoubleBeepFrequency2 = doubleBeepFrequency2; // <--- NEU
+            EinklinkDoubleBeepFrequency1 = einklinkDoubleBeepFrequency1; // <--- NEU
+            EinklinkDoubleBeepFrequency2 = einklinkDoubleBeepFrequency2; // <--- NEU
             AusklinkDoubleBeepFrequency1 = ausklinkDoubleBeepFrequency1; // <--- NEU
             AusklinkDoubleBeepFrequency2 = ausklinkDoubleBeepFrequency2; // <--- NEU
             IdleBeepFrequency = idleBeepFrequency; // <--- NEU

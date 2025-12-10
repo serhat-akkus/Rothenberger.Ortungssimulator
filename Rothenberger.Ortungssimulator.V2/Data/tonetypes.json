@@ -1,14 +1,92 @@
-﻿[
+﻿/*
+Konfigurationsvariablen für tonetypes.json:
+
+---
+Allgemeine Parameter (für alle Tontypen)
+- Id: 
+    Eindeutige (!) Kennung des Tontyps. 
+    (Bitte beim Copy-and-Pasten beachten, da die Anwendung sonst den ersten Eintrag mit dieser Id nimmt und andere ignoriert.)
+- Name: 
+    Anzeigename des Tontyps im Dropdown-Menü auf der Start-Seite.
+- Type:
+    Bezeichnung des Tontyps.
+    Unterstützte Tontypen:
+      - sinus_linear
+      - sinus_log
+      - tonleiter_diskret
+      - shepard
+      - shepard_tonleiter
+
+---
+Beep-/Sound-Parameter (für alle Tontypen relevant)
+- EinklinkDoubleBeepFrequency1 / EinklinkDoubleBeepFrequency2: 
+    Frequenzen für Einklink-Doppeltöne (Hz).
+- AusklinkDoubleBeepFrequency1 / AusklinkDoubleBeepFrequency2: 
+    Frequenzen für Ausklink-Doppeltöne (Hz).
+- DoubleBeepDurationMs: 
+    Dauer eines Doppeltons beim Ein-/Ausklinken in Millisekunden.
+- IdleBeepFrequency: 
+    Frequenz für den Idle-Leerlauf-Beep (Hz) außerhalb des Sondenradius.
+- IdleBeepIntervalMs: 
+    Intervall für den Idle-Leerlauf-Beep außerhalb des Sondenradius in Millisekunden.
+
+---
+Sinus-Töne ("sinus_linear", "sinus_log")
+- MinFrequency / MaxFrequency: 
+    Minimal- und Maximalfrequenz (Hz).
+- LogBase: 
+    Basis für logarithmische Skalen (z.B. "e"). Nur für "sinus_log" relevant.
+
+---
+Diskrete Tonleiter ("tonleiter_diskret")
+- Frequencies: 
+    Liste diskreter Frequenzen (Hz).
+
+---
+Shepard-Töne ("shepard", "shepard_diskret", "shepard_tonleiter")
+- MMax / NMax: 
+    Parameter für Shepard-Ton (kontinuierlich) und Shepard-Tonleiter (diskret).
+- FMin: 
+    Minimale Grundfrequenz (Hz).
+- Sigma: 
+    Breite der Hüllkurve für Shepard-Töne.
+- OctaveOffset:
+    Oktaven-Offset für Shepard-Töne. Skaliert FMin um 2^OctaveOffset.
+- ShepardCyclesFromEdgeToProbe:
+    Zyklen von Rand bis Sonde (Shepard).
+- SensitivitySemitonesPerSecond:
+    Geschwindigkeit des Shepard-Tons (Debug-Mode).
+- LMin / LMax:
+    Amplitudenparameter für Shepard-Tonleiter (diskret).
+
+---
+Debugging für Shepard-Ton (kontinuierlich, keine Tonleiter)
+- Debug (true/false): 
+    Aktiviert Debug-Modus, zeigt Shepard-Player unten rechts neben der Spielfläche.
+
+---
+Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen, Rauschen, Rucklern durch Mausbewegungen)
+- LatencyInMs (default: 100ms): 
+    Audio-Latenz in Millisekunden. Geringe Werte können zu Aussetzern/Rauschen führen.
+- UpdateIntervalSamples (default: 1):
+    Intervall (in Samples) für Mauspositions-Interpolation. Hohe Werte = trägere Reaktion.
+    Nur setzen, wenn es zu Audio-Aussetzern oder Performance-Problemen kommt.
+- SmoothingFactor (default: 1):
+    Glättungsfaktor für Frequenzverläufe bei ruckeligen Mausbewegungen.
+    1 = keine Glättung, kleine Werte (z.B. 0.1) = langsamere, geglättete Anpassung.
+
+  Hinweis: Meist nicht notwendig, experimentelle Features.
+*/
+
+[
   {
     "Id": "sinus_linear",
     "Name": "Sinus - linear",
     "MinFrequency": 130,
     "MaxFrequency": 1400,
     "Type": "sinus_linear",
-    "Debug": false,
-    "LatencyInMs": 100,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -22,10 +100,8 @@
     "MaxFrequency": 1400,
     "LogBase": "e",
     "Type": "sinus_log",
-    "Debug": false,
-    "LatencyInMs": 100,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -80,10 +156,8 @@
       130.813
     ],
     "Type": "tonleiter_diskret",
-    "Debug": false,
-    "LatencyInMs": 100,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -98,38 +172,12 @@
     "FMin": 55.0,
     "Sigma": 1,
     "SensitivitySemitonesPerSecond": 3.0,
+    "Debug": true,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 2,
-    "SmoothingFactor": 0.01,
     "Type": "shepard",
-    "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 512,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
-    "AusklinkDoubleBeepFrequency1": 349.2,
-    "AusklinkDoubleBeepFrequency2": 261.6,
-    "IdleBeepFrequency": 261.63,
-    "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
-  },
-  {
-    "Id": "shepard2",
-    "Name": "Shepard (N=10|M=12|SmoothingFactor=0.1)",
-    "MMax": 12,
-    "NMax": 10,
-    "FMin": 55.0,
-    "Sigma": 1,
-    "SensitivitySemitonesPerSecond": 3.0,
-    "OctaveOffset": 0,
-    "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.1,
-    "Type": "shepard",
-    "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -144,15 +192,12 @@
     "FMin": 55.0,
     "Sigma": 0.8,
     "SensitivitySemitonesPerSecond": 3.0,
+    "Debug": true,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.1,
     "Type": "shepard",
-    "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -169,13 +214,10 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 1,
-    "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -192,13 +234,10 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -215,13 +254,11 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.1,
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -238,13 +275,10 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.05,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -261,13 +295,10 @@
     "SensitivitySemitonesPerSecond": 3.0,
     "OctaveOffset": 0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.01,
     "Type": "shepard",
     "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
@@ -284,12 +315,9 @@
     "LMin": 0.1,
     "LMax": 1.0,
     "ShepardCyclesFromEdgeToProbe": 3,
-    "SmoothingFactor": 0.1,
     "Debug": true,
-    "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256,
-    "DoubleBeepFrequency1": 261.6,
-    "DoubleBeepFrequency2": 349.2,
+    "EinklinkDoubleBeepFrequency1": 261.6,
+    "EinklinkDoubleBeepFrequency2": 349.2,
     "AusklinkDoubleBeepFrequency1": 349.2,
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,

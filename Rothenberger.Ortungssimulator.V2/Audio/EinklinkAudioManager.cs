@@ -9,8 +9,8 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
 
         public EinklinkAudioManager(ToneType toneType)
         {
-            double freq1 = toneType?.DoubleBeepFrequency1 ?? 261.6;
-            double freq2 = toneType?.DoubleBeepFrequency2 ?? 349.2;
+            double freq1 = toneType?.EinklinkDoubleBeepFrequency1 ?? 261.6;
+            double freq2 = toneType?.EinklinkDoubleBeepFrequency2 ?? 349.2;
             int durationMs = toneType?.DoubleBeepDurationMs ?? 200;
             einklinkProvider = new EinklinkSoundProvider(freq1, freq2, durationMs);
 
