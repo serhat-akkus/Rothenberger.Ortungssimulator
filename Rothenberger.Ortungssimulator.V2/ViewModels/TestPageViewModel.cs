@@ -93,6 +93,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private BeepAudioService? beepAudioService;
 
+        private bool isEinklinkSoundEnabled = true;
+
         public TestPageViewModel()
         {
             StartRunCommand = new RelayCommand(StartRun);
@@ -109,7 +111,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public double EinklinkRadiusMeters => ProbeRadiusMetersIn2d / 20.0;
         public double EinklinkRadiusPixels => ProbeRadiusPixelsIn2d / 20.0;
 
-        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters)
+        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters, bool isEinklinkSoundEnabled = true)
         {
             userName = name;
             SelectedToneType = selectedToneType;
@@ -127,6 +129,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             beepAudioService = new BeepAudioService();
             if (selectedToneType?.IdleBeepFrequency != null)
                 beepAudioService.SetFrequency(selectedToneType.IdleBeepFrequency.Value);
+            this.isEinklinkSoundEnabled = isEinklinkSoundEnabled;
         }
 
         public bool IsMouseOverCanvas(Point mousePosition, double canvasX, double canvasY, double canvasWidth, double canvasHeight)
@@ -249,7 +252,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 shepardMouseAudioManager?.Pause();
                 sineAudioManager?.Pause();
 
-                einklinkAudioManager?.PlayEinklinkSound();
+                if (isEinklinkSoundEnabled)
+                    einklinkAudioManager?.PlayEinklinkSound();
                 CurrentFrequency = 0.0;
 
                 shepardMouseAudioManager?.Play();
@@ -259,7 +263,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             }
             else if (isEingeklinkt && horiz2dMeters > EinklinkRadiusMeters)
             {
-                einklinkAudioManager?.PlayAusklinkSound();
+                if (isEinklinkSoundEnabled)
+                    einklinkAudioManager?.PlayAusklinkSound();
                 shepardMouseAudioManager?.Play();
                 sineAudioManager?.Play();
                 return false; // Ausgeklinkt

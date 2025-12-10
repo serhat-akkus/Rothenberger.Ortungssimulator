@@ -44,6 +44,12 @@
 			<Label Text="Zeige Sondenradius an" VerticalOptions="Center" Margin="-80,0,0,0" />
 		</HorizontalStackLayout>
 
+        <!-- Checkbox + Text Einklink/Ausklink Sound -->
+        <HorizontalStackLayout Spacing="0">
+            <CheckBox IsChecked="{Binding IsEinklinkSoundEnabled}" VerticalOptions="Center" />
+            <Label Text="Einklink/Ausklink-Sound aktiv" VerticalOptions="Center" Margin="-80,0,0,0" />
+        </HorizontalStackLayout>
+
         <Button Text="Start"
                 Command="{Binding StartCommand}" />
     </VerticalStackLayout>
