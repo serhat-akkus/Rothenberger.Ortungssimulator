@@ -145,7 +145,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         public void UpdateAudioForMousePosition(bool isMouseOverCanvas)
         {
-            IsArrowBoxVisible = isMouseOverCanvas;
+            // Hilfspfeil nur anzeigen, wenn Maus über Canvas UND Checkbox aktiviert
+            IsArrowBoxVisible = isMouseOverCanvas && arrowEnabled;
 
             if (!isMouseOverCanvas)
             {
@@ -380,7 +381,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             IsRunsCompletedVisible = false;
             var resultsPageVm = new ResultsPageViewModel(RunResults, userName, selectedToneType?.Type, arrowEnabled);
             var resultsPage = new ResultsPage { BindingContext = resultsPageVm };
-            await Shell.Current.Navigation.PushAsync(resultsPage);
+
+            // Navigation mit Fade-Animation
+            await Shell.Current.Navigation.PushAsync(resultsPage, true);
         }
 
         public void UpdateArrowToProbe()
