@@ -1,16 +1,21 @@
-﻿using Rothenberger.Ortungssimulator.V2.Audio;
+﻿using Rothenberger.Ortungssimulator.V2.Models;
 
 namespace Rothenberger.Ortungssimulator.V2.Audio
 {
     public class EinklinkAudioManager
     {
-        private IAudioProvider? einklinkProvider;
-        private IAudioProvider? ausklinkProvider;
+        private EinklinkSoundProvider? einklinkProvider;
+        private AusklinkSoundProvider? ausklinkProvider;
 
-        public EinklinkAudioManager()
+        public EinklinkAudioManager(ToneType toneType)
         {
-            einklinkProvider = new EinklinkSoundProvider();
-            ausklinkProvider = new AusklinkSoundProvider();
+            double freq1 = toneType?.DoubleBeepFrequency1 ?? 261.6;
+            double freq2 = toneType?.DoubleBeepFrequency2 ?? 349.2;
+            einklinkProvider = new EinklinkSoundProvider(freq1, freq2);
+
+            double ausklinkFreq1 = toneType?.AusklinkDoubleBeepFrequency1 ?? 349.2;
+            double ausklinkFreq2 = toneType?.AusklinkDoubleBeepFrequency2 ?? 261.6;
+            ausklinkProvider = new AusklinkSoundProvider(ausklinkFreq1, ausklinkFreq2);
         }
 
         public void PlayEinklinkSound()

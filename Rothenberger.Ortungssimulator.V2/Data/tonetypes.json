@@ -6,7 +6,11 @@
     "MaxFrequency": 1400,
     "Type": "sinus_linear",
     "Debug": false,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "sinus_log",
@@ -16,7 +20,11 @@
     "LogBase": "e",
     "Type": "sinus_log",
     "Debug": false,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "tonleiter_diskret",
@@ -50,7 +58,11 @@
     ],
     "Type": "tonleiter_diskret",
     "Debug": false,
-    "LatencyInMs": 100
+    "LatencyInMs": 100,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard",
@@ -66,7 +78,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 512
+    "UpdateIntervalSamples": 512,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard2",
@@ -82,7 +98,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard3",
@@ -98,7 +118,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard4",
@@ -114,7 +138,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard5",
@@ -130,7 +158,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard6",
@@ -146,7 +178,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard7",
@@ -162,7 +198,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard8",
@@ -178,7 +218,11 @@
     "Type": "shepard",
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   },
   {
     "Id": "shepard_tonleiter",
@@ -193,6 +237,10 @@
     "SmoothingFactor": 0.1,
     "Debug": true,
     "LatencyInMs": 100,
-    "UpdateIntervalSamples": 256
+    "UpdateIntervalSamples": 256,
+    "DoubleBeepFrequency1": 261.6,
+    "DoubleBeepFrequency2": 349.2,
+    "AusklinkDoubleBeepFrequency1": 349.2,
+    "AusklinkDoubleBeepFrequency2": 261.6
   }
 ]

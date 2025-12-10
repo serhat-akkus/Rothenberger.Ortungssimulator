@@ -7,28 +7,57 @@ public class EinklinkSoundProvider : IAudioProvider
     private readonly object _lock = new();
     private IWavePlayer? _waveOut;
     private SignalGenerator? _signalGen;
+    private System.Timers.Timer? _timer1;
+    private System.Timers.Timer? _timer2;
+    private readonly double _freq1;
+    private readonly double _freq2;
+
+    public EinklinkSoundProvider(double freq1, double freq2)
+    {
+        _freq1 = freq1;
+        _freq2 = freq2;
+    }
 
     public void Play()
     {
         Stop();
+        // First beep: configurable
         _signalGen = new SignalGenerator()
         {
-            Frequency = 880, // z.B. hoher Ton
+            Frequency = _freq1,
             Type = SignalGeneratorType.Sin
         };
         _waveOut = new WaveOutEvent();
         _waveOut.Init(_signalGen);
         _waveOut.Play();
 
-        // Stop nach kurzer Zeit (z.B. 200ms)
-        var timer = new System.Timers.Timer(200);
-        timer.Elapsed += (s, e) =>
+        _timer1 = new System.Timers.Timer(200);
+        _timer1.Elapsed += (s, e) =>
         {
-            timer.Dispose();
-            Stop();
+            _timer1.Dispose();
+            // Second beep: configurable
+            _signalGen = new SignalGenerator()
+            {
+                Frequency = _freq2,
+                Type = SignalGeneratorType.Sin
+            };
+            _waveOut?.Stop();
+            _waveOut?.Dispose();
+            _waveOut = new WaveOutEvent();
+            _waveOut.Init(_signalGen);
+            _waveOut.Play();
+
+            _timer2 = new System.Timers.Timer(200);
+            _timer2.Elapsed += (s2, e2) =>
+            {
+                _timer2.Dispose();
+                Stop();
+            };
+            _timer2.AutoReset = false;
+            _timer2.Start();
         };
-        timer.AutoReset = false;
-        timer.Start();
+        _timer1.AutoReset = false;
+        _timer1.Start();
     }
 
     public void Stop()
@@ -39,6 +68,10 @@ public class EinklinkSoundProvider : IAudioProvider
             _waveOut?.Dispose();
             _waveOut = null;
             _signalGen = null;
+            _timer1?.Dispose();
+            _timer1 = null;
+            _timer2?.Dispose();
+            _timer2 = null;
         }
     }
 

@@ -51,7 +51,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private string userName = "";
         private ToneType selectedToneType;
 
-        private bool isAudioActive;
         private double? lastFrequency;
 
         private IDispatcherTimer? _uiTimer;
@@ -124,7 +123,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             UserNameDisplay = userName;
             ToneTypeDisplay = selectedToneType?.Name ?? "";
 
-            einklinkAudioManager = new EinklinkAudioManager();
+            einklinkAudioManager = new EinklinkAudioManager(selectedToneType);
             beepAudioService = new BeepAudioService();
         }
 
@@ -307,7 +306,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (toneId == "shepard")
             {
                 InitializeShepardMouseAudio();
-                isAudioActive = true;
                 lastFrequency = 0.0; // Shepard wird über Progress angezeigt
             }
             else if (toneId == "shepard_tonleiter")
@@ -316,13 +314,11 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 StopAudio();
                 shepardDiscreteAudioManager = new ShepardDiscreteAudioManager(selectedToneType, SampleRate, VOLUME);
                 shepardDiscreteAudioManager.Initialize();
-                isAudioActive = true;
                 lastFrequency = 0.0;
             }
             else
             {
                 InitializeSinewaveAudio(); // Sine
-                isAudioActive = true;
 
                 var minFreqInit = selectedToneType?.MinFrequency;
                 lastFrequency = minFreqInit ?? lastFrequency ?? 0.0;
@@ -405,7 +401,6 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         private void StopAudio()
         {
             _anyAudioActive = false;
-            isAudioActive = false;
 
             sineAudioManager?.Stop();
             sineAudioManager?.Dispose();
