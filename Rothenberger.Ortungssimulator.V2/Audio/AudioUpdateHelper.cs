@@ -105,13 +105,14 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             audioManager.Play();
 
             var list = toneType?.Frequencies;
-            if (list != null && list.Count > 0)
+            if (list != null && list.Count > 0 && probeRadius3DMeters > 0)
             {
-                // Diskrete Schritte entlang der 3D-Distanz
-                double stepMeters = 0.2;
-                int index = (int)Math.Floor(distance3dMouseToProbe / stepMeters);
+                // Dynamische Schritte entlang der 3D-Distanz
+                int stepCount = list.Count;
+                double stepSize = probeRadius3DMeters / stepCount;
+                int index = (int)Math.Floor(distance3dMouseToProbe / stepSize);
                 if (index < 0) index = 0;
-                if (index >= list.Count) index = list.Count - 1;
+                if (index >= stepCount) index = stepCount - 1;
 
                 double freq = list[index];
                 audioManager.SetFrequency(freq);

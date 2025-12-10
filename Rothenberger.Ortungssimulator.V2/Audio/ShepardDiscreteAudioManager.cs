@@ -78,6 +78,19 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
             waveOut?.Volume = volume;
         }
 
+        public void SetCurrentStepByDistance(double distance3dMouseToProbe, double probeRadius3DMeters)
+        {
+            if (toneType.Frequencies != null && toneType.Frequencies.Count > 0 && probeRadius3DMeters > 0)
+            {
+                int stepCount = toneType.Frequencies.Count;
+                double stepSize = probeRadius3DMeters / stepCount;
+                int index = (int)Math.Floor(distance3dMouseToProbe / stepSize);
+                if (index < 0) index = 0;
+                if (index >= stepCount) index = stepCount - 1;
+                SetCurrentStep(index + 1); // 1-based index for step
+            }
+        }
+
         public ShepardDiscreteProvider? Provider => provider;
 
         public PlaybackState PlaybackState => waveOut?.PlaybackState ?? PlaybackState.Stopped;
