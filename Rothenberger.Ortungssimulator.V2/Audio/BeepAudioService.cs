@@ -7,7 +7,7 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
     public class BeepAudioService : IDisposable
     {
         private Timer _timer;
-        private readonly int _intervalMs = 1000;
+        private int _intervalMs = 1000;
         private readonly float _beepDurationSec = 0.1f;
         private int _beepFrequency = 1000;
         private bool _isPlaying;
@@ -16,6 +16,15 @@ namespace Rothenberger.Ortungssimulator.V2.Audio
         public void SetFrequency(double frequency)
         {
             _beepFrequency = (int)frequency;
+        }
+
+        public void SetInterval(int intervalMs)
+        {
+            _intervalMs = intervalMs;
+            if (_isPlaying && _timer != null)
+            {
+                _timer.Change(0, _intervalMs);
+            }
         }
 
         public void Play()

@@ -129,6 +129,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             beepAudioService = new BeepAudioService();
             if (selectedToneType?.IdleBeepFrequency != null)
                 beepAudioService.SetFrequency(selectedToneType.IdleBeepFrequency.Value);
+            if (selectedToneType?.IdleBeepIntervalMs != null)
+                beepAudioService.SetInterval(selectedToneType.IdleBeepIntervalMs.Value);
             this.isEinklinkSoundEnabled = isEinklinkSoundEnabled;
         }
 
