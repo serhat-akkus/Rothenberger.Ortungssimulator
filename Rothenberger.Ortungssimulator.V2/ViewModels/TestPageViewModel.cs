@@ -104,8 +104,17 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         /// </summary>
         private double GenerateRandomProbeDepth()
         {
+            // Hole Min/Max aus dem gewählten ToneType, falls vorhanden, sonst Default
+            double min = selectedToneType?.ProbeDepthMin ?? 0.0;
+            double max = selectedToneType?.ProbeDepthMax ?? 3.0;
+            if (min > max)
+            {
+                // Fallback falls Konfiguration fehlerhaft
+                min = 0.0;
+                max = 3.0;
+            }
             var rnd = new Random();
-            double value = rnd.NextDouble() * 3.0;
+            double value = min + rnd.NextDouble() * (max - min);
             return Math.Round(value, 2, MidpointRounding.AwayFromZero);
         }
 
