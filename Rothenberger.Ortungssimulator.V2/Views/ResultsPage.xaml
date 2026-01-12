@@ -59,7 +59,7 @@
                                 <Label Grid.Column="2" Style="{StaticResource CellTextStyle}"
                                        Text="{Binding Timestamp, StringFormat='{0:yyyy-MM-dd HH:mm:ss}'}" />
                                 <Label Grid.Column="3" Style="{StaticResource CellTextStyle}"
-                                       Text="{Binding Time, StringFormat='{0:mm\\:ss}'}" />
+                                       Text="{Binding Time, StringFormat='{}{0:mm\\:ss\\.ff}'}" />
                                 <Label Grid.Column="4" Style="{StaticResource CellTextStyle}"
                                        Text="{Binding Distance, StringFormat='{0:F2}'}" />
                                 <Label Grid.Column="5" Style="{StaticResource CellTextStyle}"
@@ -72,6 +72,8 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
+                <!-- Durchschnittszeit-Label -->
+                <Label Text="{Binding AverageTimeDisplay}" FontAttributes="Bold" FontSize="18" HorizontalOptions="Center" />
                 <!-- Button direkt unter der Tabelle -->
                 <Button Text="Speichern und fortfahren"
                         Command="{Binding SaveAndContinueCommand}"

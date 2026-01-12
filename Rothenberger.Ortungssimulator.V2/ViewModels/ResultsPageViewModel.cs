@@ -1,5 +1,8 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Globalization;
+using System.Linq;
+using System.Text;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Rothenberger.Ortungssimulator.V2.Models;
@@ -17,6 +20,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public string ToneType { get; }
         public bool ArrowEnabled { get; }
 
+        [ObservableProperty]
+        private string averageTimeDisplay;
+
         public IRelayCommand SaveAndContinueCommand { get; }
 
         public ResultsPageViewModel(
@@ -30,6 +36,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             ToneType = toneType;
             ArrowEnabled = arrowEnabled;
             SaveAndContinueCommand = new RelayCommand(SaveAndContinue);
+
+            UpdateAverageTimeDisplay();
+        }
+
+        private void UpdateAverageTimeDisplay()
+        {
+            if (RunResults.Count == 0)
+            {
+                AverageTimeDisplay = "Ø Zeit: -";
+                return;
+            }
+            var avg = TimeSpan.FromMilliseconds(RunResults.Average(r => r.Time.TotalMilliseconds));
+            AverageTimeDisplay = $"Ø Zeit: {avg:mm\\:ss\\.ff}";
         }
 
         private static string CleanCsvField(string value)
@@ -43,15 +62,29 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var date = now.ToString("yyMMdd", CultureInfo.InvariantCulture);
             var time = now.ToString("HHmmss", CultureInfo.InvariantCulture);
             var arrowStr = ArrowEnabled ? "ja" : "nein";
-            var fileName = $"{date}_{time}_{CleanCsvField(UserName)}_{CleanCsvField(ToneType)}_Hilfspfeil_{arrowStr}.csv";
+            var fileName = $"{date}_{time}_{CleanCsvField(UserName)}_" +
+                $"{CleanCsvField(ToneType)}_Hilfspfeil_{arrowStr}.csv";
 
             // Header ergänzen
-            const string header = "Name;Ton-Typ;Zeitstempel;Dauer;Distanz(m);Sondentiefe(m);Hilfspfeil";
+            const string header = "Name;Ton-Typ;Zeitstempel;Dauer (s);Distanz (m);Sondentiefe (m);Pfeil";
 
             var csvLines = RunResults.Select(r =>
-                $"{CleanCsvField(r.Name)};{CleanCsvField(r.ToneType)};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{r.ProbeDepthMeters:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
+                $"{CleanCsvField(r.Name)};{CleanCsvField(r.ToneType)};" +
+                $"{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss\\.ff};" +
+                $"{r.Distance:F2};{r.ProbeDepthMeters:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
 
-            var csv = header + Environment.NewLine + string.Join(Environment.NewLine, csvLines);
+            // Durchschnitt berechnen
+            string averageLine = "";
+            if (RunResults.Count > 0)
+            {
+                var avg = TimeSpan.FromMilliseconds(RunResults.Average(r => r.Time.TotalMilliseconds));
+                averageLine = Environment.NewLine + $"Durchschnittszeit:;{avg:mm\\:ss\\.ff}";
+            }
+
+            // CSV zusammenbauen: Header, Daten, Leerzeile, Durchschnitt
+            var csv = header + Environment.NewLine
+                      + string.Join(Environment.NewLine, csvLines)
+                      + averageLine;
 
             string finalPath;
             try
