@@ -29,7 +29,7 @@
         <!-- Sondentiefe -->
         <Label Text="Sondentiefe (m)" FontAttributes="Bold" />
         <Slider Minimum="0" Maximum="3" Value="{Binding ProbeDepthMeters}" />
-        <Label Text="{Binding ProbeDepthMeters, StringFormat='Aktuelle Tiefe: {0:F1} m'}" FontSize="12" />
+        <Label Text="{Binding ProbeDepthMeters, StringFormat='Aktuelle Tiefe: {0:F2} m'}" FontSize="12" />
 
         <!-- Checkbox + Text sehr nah -->
         <HorizontalStackLayout Spacing="0">

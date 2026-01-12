@@ -97,6 +97,18 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         [ObservableProperty] private bool isProbeRadiusRandom;
 
+        private double? _currentRunRandomProbeDepth;
+
+        /// <summary>
+        /// Generiert eine zufällige Sondentiefe zwischen 0.0 und 3.0 Metern, gerundet auf zwei Nachkommastellen.
+        /// </summary>
+        private double GenerateRandomProbeDepth()
+        {
+            var rnd = new Random();
+            double value = rnd.NextDouble() * 3.0;
+            return Math.Round(value, 2, MidpointRounding.AwayFromZero);
+        }
+
         public TestPageViewModel()
         {
             StartRunCommand = new RelayCommand(StartRun);
@@ -296,6 +308,19 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             probeLogicalPosition = _canvas.GetRandomProbePosition(rnd);
             ProbePosition = probeLogicalPosition;
 
+            // Zufällige Sondentiefe setzen, falls aktiviert
+            if (IsProbeRadiusRandom)
+            {
+                _currentRunRandomProbeDepth = GenerateRandomProbeDepth();
+                ProbeDepthMeters = _currentRunRandomProbeDepth.Value;
+                OnPropertyChanged(nameof(ProbeRadiusMetersIn2d));
+                OnPropertyChanged(nameof(ProbeRadiusPixelsIn2d));
+            }
+            else
+            {
+                _currentRunRandomProbeDepth = null;
+            }
+
             _runTimerService?.Dispose();
             _runTimerService = new RunTimerService(text => TimerText = text);
             _runTimerService.Start();
@@ -369,7 +394,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 Time = elapsed,
                 Distance = dist,
                 ArrowEnabled = arrowEnabled,
-                ProbeDepthMeters = ProbeDepthMeters
+                ProbeDepthMeters = IsProbeRadiusRandom && _currentRunRandomProbeDepth.HasValue
+                    ? _currentRunRandomProbeDepth.Value
+                    : ProbeDepthMeters
             };
 
             RunResults.Add(testRunResult);

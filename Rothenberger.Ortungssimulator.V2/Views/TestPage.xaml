@@ -27,8 +27,8 @@
                 InputTransparent="False" />
 			<StackLayout>
                 <StackLayout Orientation="Horizontal" Spacing="24" VerticalOptions="Center">
-                    <Label Text="{Binding ProbeDepthMeters, StringFormat='Sondentiefe: {0:F1} m'}" FontSize="18" />
-                    <Label Text="{Binding ProbeRadiusMetersIn2d, StringFormat='Sondenradius: {0:F1} m'}" FontSize="18" />
+                    <Label Text="{Binding ProbeDepthMeters, StringFormat='Sondentiefe: {0:F2} m'}" FontSize="18" IsVisible="{Binding IsProbeVisible}" />
+                    <Label Text="{Binding ProbeRadiusMetersIn2d, StringFormat='Sondenradius: {0:F2} m'}" FontSize="18" IsVisible="{Binding IsProbeVisible}" />
                 </StackLayout>
                 <StackLayout Orientation="Horizontal" Spacing="8" VerticalOptions="Center">
                     <Label Text="Timer:" FontSize="24" />
