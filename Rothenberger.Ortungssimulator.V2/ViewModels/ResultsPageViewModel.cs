@@ -46,10 +46,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var fileName = $"{date}_{time}_{CleanCsvField(UserName)}_{CleanCsvField(ToneType)}_Hilfspfeil_{arrowStr}.csv";
 
             // Header ergänzen
-            const string header = "Name;Ton-Typ;Zeitstempel;Dauer;Distanz(m);Hilfspfeil";
+            const string header = "Name;Ton-Typ;Zeitstempel;Dauer;Distanz(m);Sondentiefe(m);Hilfspfeil";
 
             var csvLines = RunResults.Select(r =>
-                $"{CleanCsvField(r.Name)};{CleanCsvField(r.ToneType)};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
+                $"{CleanCsvField(r.Name)};{CleanCsvField(r.ToneType)};{r.Timestamp:yyyy-MM-dd HH:mm:ss};{r.Time:mm\\:ss};{r.Distance:F2};{r.ProbeDepthMeters:F2};{(r.ArrowEnabled ? "ja" : "nein")}");
 
             var csv = header + Environment.NewLine + string.Join(Environment.NewLine, csvLines);
 

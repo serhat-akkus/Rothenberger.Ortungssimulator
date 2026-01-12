@@ -368,7 +368,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 Timestamp = DateTime.Now,
                 Time = elapsed,
                 Distance = dist,
-                ArrowEnabled = arrowEnabled
+                ArrowEnabled = arrowEnabled,
+                ProbeDepthMeters = ProbeDepthMeters
             };
 
             RunResults.Add(testRunResult);

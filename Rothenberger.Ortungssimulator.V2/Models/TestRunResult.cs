@@ -17,5 +17,6 @@
 
         public double Distance { get; set; }
         public bool ArrowEnabled { get; set; }
+        public double ProbeDepthMeters { get; set; }
     }
 }

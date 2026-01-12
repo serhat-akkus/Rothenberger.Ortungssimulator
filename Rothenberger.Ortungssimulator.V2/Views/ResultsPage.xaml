@@ -31,7 +31,7 @@
             <VerticalStackLayout Spacing="12">
 
                 <!-- Tabellen-Header -->
-                <Grid ColumnDefinitions="2*,2*,2*,2*,2*,Auto"
+                <Grid ColumnDefinitions="2*,2*,2*,2*,2*,2*,2*,Auto"
                       BackgroundColor="{AppThemeBinding Light='#EEEEEE', Dark='#222222'}"
                       Padding="0,4">
                     <Label Grid.Column="0" Text="Name" Style="{StaticResource HeaderTextStyle}" />
@@ -39,7 +39,8 @@
                     <Label Grid.Column="2" Text="Zeitstempel" Style="{StaticResource HeaderTextStyle}" />
                     <Label Grid.Column="3" Text="Dauer" Style="{StaticResource HeaderTextStyle}" />
                     <Label Grid.Column="4" Text="Distanz (m)" Style="{StaticResource HeaderTextStyle}" />
-                    <Label Grid.Column="5" Text="Pfeil" Style="{StaticResource HeaderTextStyle}" HorizontalTextAlignment="Center" />
+                    <Label Grid.Column="5" Text="Sondentiefe (m)" Style="{StaticResource HeaderTextStyle}" />
+                    <Label Grid.Column="6" Text="Pfeil" Style="{StaticResource HeaderTextStyle}" HorizontalTextAlignment="Center" />
                 </Grid>
 
                 <!-- Ergebnisliste als Tabelle -->
@@ -52,7 +53,7 @@
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
-                            <Grid ColumnDefinitions="2*,2*,2*,2*,2*,Auto" Padding="0,2">
+                            <Grid ColumnDefinitions="2*,2*,2*,2*,2*,2*,2*,Auto" Padding="0,4">
                                 <Label Grid.Column="0" Style="{StaticResource CellTextStyle}" Text="{Binding Name}" />
                                 <Label Grid.Column="1" Style="{StaticResource CellTextStyle}" Text="{Binding ToneType}" />
                                 <Label Grid.Column="2" Style="{StaticResource CellTextStyle}"
@@ -62,6 +63,8 @@
                                 <Label Grid.Column="4" Style="{StaticResource CellTextStyle}"
                                        Text="{Binding Distance, StringFormat='{0:F2}'}" />
                                 <Label Grid.Column="5" Style="{StaticResource CellTextStyle}"
+                                       Text="{Binding ProbeDepthMeters, StringFormat='{0:F2}'}" />
+                                <Label Grid.Column="6" Style="{StaticResource CellTextStyle}"
                                        HorizontalTextAlignment="Center"
                                        Text="{Binding ArrowEnabled}" />
                             </Grid>
