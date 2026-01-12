@@ -123,7 +123,7 @@
                                    HorizontalTextAlignment="Start"
                                    LineBreakMode="TailTruncation" />
                             <Label Grid.Column="1"
-                                   Text="{Binding Time, StringFormat='{0:mm\\:ss}'}"
+                                   Text="{Binding Time.TotalSeconds, StringFormat='{}{0:F2} s'}"
                                    VerticalTextAlignment="Center"
                                    HorizontalTextAlignment="Center" />
                             <Label Grid.Column="2"

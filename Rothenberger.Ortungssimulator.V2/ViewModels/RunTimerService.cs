@@ -1,14 +1,11 @@
-﻿using System;
-using Microsoft.Maui.ApplicationModel;
-
-namespace Rothenberger.Ortungssimulator.V2.ViewModels
+﻿namespace Rothenberger.Ortungssimulator.V2.ViewModels
 {
     public class RunTimerService : IDisposable
     {
         private IDispatcherTimer? _timer;
         private DateTime _startTime;
         private readonly Action<string> _onTick;
-        private bool _isRunning;
+        public TimeSpan TimeElapsed { get; private set; }
 
         public RunTimerService(Action<string> onTick)
         {
@@ -22,10 +19,9 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             _timer = Application.Current?.Dispatcher.CreateTimer();
             if (_timer != null)
             {
-                _timer.Interval = TimeSpan.FromMilliseconds(50);
+                _timer.Interval = TimeSpan.FromMilliseconds(10);
                 _timer.Tick += OnTimerTick;
                 _timer.Start();
-                _isRunning = true;
             }
         }
 
@@ -37,14 +33,13 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                 _timer.Tick -= OnTimerTick;
                 _timer = null;
             }
-            _isRunning = false;
         }
 
         private void OnTimerTick(object? sender, EventArgs e)
         {
-            var elapsed = DateTime.Now - _startTime;
-            var text = string.Format("{0:mm\\:ss}.{1:000}", elapsed, elapsed.Milliseconds);
-            _onTick(text);
+            TimeElapsed = DateTime.Now - _startTime;
+            var time = string.Format("{0:mm\\:ss}.{1:000}", TimeElapsed, TimeElapsed.Milliseconds);
+            _onTick(time);
         }
 
         public void Dispose()

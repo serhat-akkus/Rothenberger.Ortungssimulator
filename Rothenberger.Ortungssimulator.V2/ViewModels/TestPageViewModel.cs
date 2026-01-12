@@ -278,6 +278,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         // Sweep mit Streaming-Provider
         private void StartRun()
         {
+            runStartTime = DateTime.Now;
             CurrentMousePosition = new Point(-1, -1);
 
             IsRunNotStarted = false;
@@ -355,15 +356,20 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var dist = Distance3DHelper.CalculateDistanceMeters(probeLogicalPosition, clamped, MeterPerPixel);
             DistanceText = $"Distanz: {dist:F2} m";
 
-            RunResults.Add(new TestRunResult
+            var elapsed = DateTime.Now - runStartTime;
+            TestRunResult testRunResult = new()
             {
                 Name = userName,
                 ToneType = selectedToneType.Name,
                 Timestamp = DateTime.Now,
-                Time = DateTime.Now - runStartTime,
+                Time = elapsed,
                 Distance = dist,
                 ArrowEnabled = arrowEnabled
-            });
+            };
+
+            RunResults.Add(testRunResult);
+
+            TimerText = string.Format("{0:mm\\:ss}.{1:000}", elapsed, elapsed.Milliseconds);
 
             if (currentRun >= totalRuns)
             {
