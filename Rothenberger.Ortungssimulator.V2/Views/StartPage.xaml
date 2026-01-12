@@ -50,6 +50,11 @@
             <Label Text="Einklink/Ausklink-Sound aktiv" VerticalOptions="Center" Margin="-80,0,0,0" />
         </HorizontalStackLayout>
 
+        <HorizontalStackLayout Spacing="0">
+            <CheckBox IsChecked="{Binding IsProbeRadiusRandom}" VerticalOptions="Center" />
+            <Label Text="Sondenradius zufällig setzen" VerticalOptions="Center" Margin="-80,0,0,0" />
+        </HorizontalStackLayout>
+        
         <Button Text="Start"
                 Command="{Binding StartCommand}" />
     </VerticalStackLayout>

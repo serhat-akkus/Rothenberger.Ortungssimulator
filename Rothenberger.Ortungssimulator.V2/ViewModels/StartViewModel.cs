@@ -20,6 +20,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         [ObservableProperty] private string toneTypeError = "";
         [ObservableProperty] private string runCountError = "";
         [ObservableProperty] private double probeDepthMeters = 0.0;
+        [ObservableProperty] private bool isProbeRadiusRandom = true;
 
         public ObservableCollection<ToneType> ToneTypes { get; set; } = new();
 
@@ -85,7 +86,17 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             var testPage = new TestPage();
             if (testPage.BindingContext is TestPageViewModel vm)
             {
-                vm.Initialize(UserName, SelectedToneType, TestRunCount, ShowArrow, ShowProbeRadius, ProbeDepthMeters, IsEinklinkSoundEnabled);
+                vm.Initialize(
+                    UserName,
+                    SelectedToneType,
+                    TestRunCount,
+                    ShowArrow,
+                    ShowProbeRadius,
+                    ProbeDepthMeters,
+                    IsEinklinkSoundEnabled
+                    //,
+                    //IsProbeRadiusRandom
+                );
             }
             await Shell.Current.Navigation.PushAsync(testPage);
         }
