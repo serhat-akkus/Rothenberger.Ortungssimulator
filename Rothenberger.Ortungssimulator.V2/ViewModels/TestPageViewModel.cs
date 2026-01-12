@@ -95,6 +95,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
 
         private bool isEinklinkSoundEnabled = true;
 
+        [ObservableProperty] private bool isProbeRadiusRandom;
+
         public TestPageViewModel()
         {
             StartRunCommand = new RelayCommand(StartRun);
@@ -111,7 +113,7 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
         public double EinklinkRadiusMeters => ProbeRadiusMetersIn2d / 20.0;
         public double EinklinkRadiusPixels => ProbeRadiusPixelsIn2d / 20.0;
 
-        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters, bool isEinklinkSoundEnabled = true)
+        public void Initialize(string name, ToneType selectedToneType, int runCount, bool arrow, bool showProbeRadius, double probeDepthMeters, bool isEinklinkSoundEnabled = true, bool isProbeRadiusRandom = true)
         {
             userName = name;
             SelectedToneType = selectedToneType;
@@ -132,6 +134,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
             if (selectedToneType?.IdleBeepIntervalMs != null)
                 beepAudioService.SetInterval(selectedToneType.IdleBeepIntervalMs.Value);
             this.isEinklinkSoundEnabled = isEinklinkSoundEnabled;
+
+            IsProbeRadiusRandom = isProbeRadiusRandom;
         }
 
         public bool IsMouseOverCanvas(Point mousePosition, double canvasX, double canvasY, double canvasWidth, double canvasHeight)

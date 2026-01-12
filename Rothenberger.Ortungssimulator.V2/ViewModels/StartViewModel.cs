@@ -93,9 +93,8 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
                     ShowArrow,
                     ShowProbeRadius,
                     ProbeDepthMeters,
-                    IsEinklinkSoundEnabled
-                    //,
-                    //IsProbeRadiusRandom
+                    IsEinklinkSoundEnabled,
+                    IsProbeRadiusRandom
                 );
             }
             await Shell.Current.Navigation.PushAsync(testPage);
