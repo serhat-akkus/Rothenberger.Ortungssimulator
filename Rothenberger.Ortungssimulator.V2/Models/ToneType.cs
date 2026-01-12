@@ -22,16 +22,20 @@ namespace Rothenberger.Ortungssimulator.V2.Models
         public bool Debug { get; set; }
         public double? LMin { get; set; }
         public double? LMax { get; set; }
-        public int? LatencyInMs { get; set; } // <--- NEU
-        public double? SmoothingFactor { get; set; } // <--- NEU
-        public int? UpdateIntervalSamples { get; set; } // <--- NEU
-        public double? EinklinkDoubleBeepFrequency1 { get; set; } // <--- NEU
-        public double? EinklinkDoubleBeepFrequency2 { get; set; } // <--- NEU
-        public double? AusklinkDoubleBeepFrequency1 { get; set; } // <--- NEU
-        public double? AusklinkDoubleBeepFrequency2 { get; set; } // <--- NEU
-        public double? IdleBeepFrequency { get; set; } // <--- NEU
-        public int? DoubleBeepDurationMs { get; set; } // <--- NEW
-        public int? IdleBeepIntervalMs { get; set; } // <--- NEW
+        public int? LatencyInMs { get; set; }
+        public double? SmoothingFactor { get; set; }
+        public int? UpdateIntervalSamples { get; set; }
+        public double? EinklinkDoubleBeepFrequency1 { get; set; }
+        public double? EinklinkDoubleBeepFrequency2 { get; set; }
+        public double? AusklinkDoubleBeepFrequency1 { get; set; }
+        public double? AusklinkDoubleBeepFrequency2 { get; set; }
+        public double? IdleBeepFrequency { get; set; }
+        public int? DoubleBeepDurationMs { get; set; }
+        public int? IdleBeepIntervalMs { get; set; }
+
+        // NEU: Sondentiefe-Min/Max
+        public double? ProbeDepthMin { get; set; }
+        public double? ProbeDepthMax { get; set; }
 
         [JsonConstructor]
         public ToneType(
@@ -52,16 +56,18 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             bool debug = false,
             double? lMin = null,
             double? lMax = null,
-            int? latencyInMs = null, // <--- NEU
-            double? smoothingFactor = null, // <--- NEU
-            int? updateIntervalSamples = null, // <--- NEU
-            double? einklinkDoubleBeepFrequency1 = null, // <--- NEU
-            double? einklinkDoubleBeepFrequency2 = null, // <--- NEU
-            double? ausklinkDoubleBeepFrequency1 = null, // <--- NEU
-            double? ausklinkDoubleBeepFrequency2 = null, // <--- NEU
-            double? idleBeepFrequency = null, // <--- NEU
-            int? doubleBeepDurationMs = null, // <--- NEU
-            int? idleBeepIntervalMs = null // <--- NEW
+            int? latencyInMs = null,
+            double? smoothingFactor = null,
+            int? updateIntervalSamples = null,
+            double? einklinkDoubleBeepFrequency1 = null,
+            double? einklinkDoubleBeepFrequency2 = null,
+            double? ausklinkDoubleBeepFrequency1 = null,
+            double? ausklinkDoubleBeepFrequency2 = null,
+            double? idleBeepFrequency = null,
+            int? doubleBeepDurationMs = null,
+            int? idleBeepIntervalMs = null,
+            double? probeDepthMin = null, // <--- NEU
+            double? probeDepthMax = null  // <--- NEU
         )
         {
             Id = id;
@@ -81,16 +87,18 @@ namespace Rothenberger.Ortungssimulator.V2.Models
             Debug = debug;
             LMin = lMin;
             LMax = lMax;
-            LatencyInMs = latencyInMs; // <--- NEU
-            SmoothingFactor = smoothingFactor == null || smoothingFactor == 0 ? 1 : smoothingFactor; // Default 1, falls null oder 0
-            UpdateIntervalSamples = updateIntervalSamples; // <--- NEU
-            EinklinkDoubleBeepFrequency1 = einklinkDoubleBeepFrequency1; // <--- NEU
-            EinklinkDoubleBeepFrequency2 = einklinkDoubleBeepFrequency2; // <--- NEU
-            AusklinkDoubleBeepFrequency1 = ausklinkDoubleBeepFrequency1; // <--- NEU
-            AusklinkDoubleBeepFrequency2 = ausklinkDoubleBeepFrequency2; // <--- NEU
-            IdleBeepFrequency = idleBeepFrequency; // <--- NEU
-            DoubleBeepDurationMs = doubleBeepDurationMs; // <--- NEU
-            IdleBeepIntervalMs = idleBeepIntervalMs; // <--- NEW
+            LatencyInMs = latencyInMs;
+            SmoothingFactor = smoothingFactor == null || smoothingFactor == 0 ? 1 : smoothingFactor;
+            UpdateIntervalSamples = updateIntervalSamples;
+            EinklinkDoubleBeepFrequency1 = einklinkDoubleBeepFrequency1;
+            EinklinkDoubleBeepFrequency2 = einklinkDoubleBeepFrequency2;
+            AusklinkDoubleBeepFrequency1 = ausklinkDoubleBeepFrequency1;
+            AusklinkDoubleBeepFrequency2 = ausklinkDoubleBeepFrequency2;
+            IdleBeepFrequency = idleBeepFrequency;
+            DoubleBeepDurationMs = doubleBeepDurationMs;
+            IdleBeepIntervalMs = idleBeepIntervalMs;
+            ProbeDepthMin = probeDepthMin;
+            ProbeDepthMax = probeDepthMax;
         }
     }
 }

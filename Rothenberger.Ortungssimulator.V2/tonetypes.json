@@ -75,6 +75,15 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     Glättungsfaktor für Frequenzverläufe bei ruckeligen Mausbewegungen.
     1 = keine Glättung, kleine Werte (z.B. 0.1) = langsamere, geglättete Anpassung.
 
+---
+Sondentiefe-Konfiguration (für alle Tontypen relevant)
+- ProbeDepthMin:
+    Minimale Sondentiefe (Meter), die für diesen Ton-Typ verwendet werden kann, falls Zufallspositionen in der Checkbox aktiviert wurden.
+    Optional. Wird kein Wert gesetzt, wird 0.0 als Standard verwendet.
+- ProbeDepthMax:
+    Maximale Sondentiefe (Meter), die für diesen Ton-Typ verwendet werden kann, falls Zufallspositionen in der Checkbox aktiviert wurden.
+    Optional. Wird kein Wert gesetzt, wird 3.0 als Standard verwendet.
+
   Hinweis: Meist nicht notwendig, experimentelle Features.
 */
 
@@ -91,7 +100,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 1.0,
+    "ProbeDepthMax": 1.2
   },
   {
     "Id": "sinus_log",
@@ -106,7 +117,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "tonleiter_diskret",
@@ -162,7 +175,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard",
@@ -182,7 +197,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard3",
@@ -202,7 +219,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard4",
@@ -222,7 +241,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard5",
@@ -242,7 +263,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard6",
@@ -263,7 +286,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard7",
@@ -283,7 +308,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard8",
@@ -303,7 +330,9 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   },
   {
     "Id": "shepard_tonleiter",
@@ -322,6 +351,8 @@ Performance-Parameter für Shepard-Töne (nur relevant bei Performance-Problemen
     "AusklinkDoubleBeepFrequency2": 261.6,
     "IdleBeepFrequency": 261.63,
     "DoubleBeepDurationMs": 200,
-    "IdleBeepIntervalMs": 1000
+    "IdleBeepIntervalMs": 1000,
+    "ProbeDepthMin": 0.0,
+    "ProbeDepthMax": 3.0
   }
 ]
