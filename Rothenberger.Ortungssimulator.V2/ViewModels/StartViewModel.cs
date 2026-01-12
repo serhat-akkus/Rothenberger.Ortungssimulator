@@ -12,10 +12,10 @@ namespace Rothenberger.Ortungssimulator.V2.ViewModels
     {
         [ObservableProperty] private string userName = "Proband";
         [ObservableProperty] private ToneType selectedToneType;
-        [ObservableProperty] private int testRunCount = 10;
-        [ObservableProperty] private bool showArrow;
-        [ObservableProperty] private bool showProbeRadius;
-        [ObservableProperty] private bool isEinklinkSoundEnabled = true;
+        [ObservableProperty] private int testRunCount = 7;
+        [ObservableProperty] private bool showArrow = true;
+        [ObservableProperty] private bool showProbeRadius = true;
+        [ObservableProperty] private bool isEinklinkSoundEnabled = false;
         [ObservableProperty] private string userNameError = "";
         [ObservableProperty] private string toneTypeError = "";
         [ObservableProperty] private string runCountError = "";
