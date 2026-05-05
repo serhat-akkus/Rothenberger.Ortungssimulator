@@ -52,7 +52,7 @@
 
         <HorizontalStackLayout Spacing="0">
             <CheckBox IsChecked="{Binding IsProbeRadiusRandom}" VerticalOptions="Center" />
-            <Label Text="Sondenradius zufällig setzen" VerticalOptions="Center" Margin="-80,0,0,0" />
+            <Label Text="Sondentiefe zufällig setzen" VerticalOptions="Center" Margin="-80,0,0,0" />
         </HorizontalStackLayout>
         
         <Button Text="Start"
